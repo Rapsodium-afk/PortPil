@@ -1,0 +1,16 @@
+
+[
+  {
+    "id": "1",
+    "content": "Retrasos en puerta TTP2 por mantenimiento no programado. Se espera resolución en 2 horas.",
+    "author": "Director General",
+    "createdAt": "2024-07-30T13:00:00.000Z",
+    "imageUrl": "https://picsum.photos/seed/news1/1200/600"
+  },
+  {
+    "id": "2",
+    "content": "La nueva política de acceso para transportistas entrará en vigor el próximo lunes. Consulten la documentación.",
+    "author": "Director General",
+    "createdAt": "2024-07-29T09:00:00.000Z"
+  }
+]

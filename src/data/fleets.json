@@ -1,0 +1,29 @@
+[
+  {
+    "companyName": "Transport.com",
+    "vehicles": [
+      {
+        "plate": "R123456",
+        "type": "Semirremolque",
+        "status": "Activo",
+        "history": [
+          {
+            "action": "Alta",
+            "performedAt": "2026-03-09T09:40:21.854Z",
+            "performedBy": "Admin"
+          },
+          {
+            "action": "Baja",
+            "performedAt": "2026-03-09T09:40:25.667Z",
+            "performedBy": "Admin"
+          },
+          {
+            "action": "Alta",
+            "performedAt": "2026-03-09T09:40:28.150Z",
+            "performedBy": "Admin"
+          }
+        ]
+      }
+    ]
+  }
+]

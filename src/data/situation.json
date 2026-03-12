@@ -1,0 +1,57 @@
+[
+  {
+    "id": "ttp1",
+    "name": "TTP1",
+    "category": "TERMINAL",
+    "freeSpots": 321,
+    "maxSpots": 870,
+    "status": "Solo para import",
+    "lastUpdated": "2026-03-12T17:29:58.772Z",
+    "operatingStatus": "Abierta",
+    "withStaff": true
+  },
+  {
+    "id": "ttp2",
+    "name": "TTP2",
+    "category": "TERMINAL",
+    "freeSpots": 17,
+    "maxSpots": 365,
+    "status": "Solo para export",
+    "lastUpdated": "2026-03-12T17:29:58.772Z",
+    "operatingStatus": "Abierta",
+    "withStaff": true
+  },
+  {
+    "id": "ttia",
+    "name": "TTIA",
+    "category": "ZONA_AUXILIAR",
+    "freeSpots": 110,
+    "maxSpots": 110,
+    "status": "Solo salidas",
+    "lastUpdated": "2026-03-12T17:29:58.772Z",
+    "operatingStatus": "Abierta",
+    "withStaff": true
+  },
+  {
+    "id": "cantil",
+    "name": "CANTIL",
+    "category": "ZONA_AUXILIAR",
+    "freeSpots": 0,
+    "maxSpots": 100,
+    "status": "Solo salidas",
+    "lastUpdated": "2026-03-12T17:29:58.772Z",
+    "operatingStatus": "Abierta",
+    "withStaff": true
+  },
+  {
+    "id": "teco",
+    "name": "TECO",
+    "category": "ZONA_AUXILIAR",
+    "freeSpots": 120,
+    "maxSpots": 130,
+    "status": "Solo salidas",
+    "lastUpdated": "2026-03-12T17:29:58.772Z",
+    "operatingStatus": "Abierta",
+    "withStaff": false
+  }
+]

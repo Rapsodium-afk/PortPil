@@ -1,0 +1,20 @@
+[
+  {
+    "id": "resp-approve-std",
+    "title": "Aprobación Estándar",
+    "responseText": "Su solicitud ha sido revisada y aprobada. Puede proceder.",
+    "status": "Aprobado"
+  },
+  {
+    "id": "resp-deny-incomplete",
+    "title": "Denegado (Info Incompleta)",
+    "responseText": "La solicitud ha sido denegada por falta de información. Por favor, revise los datos o documentos adjuntos y cree una nueva solicitud si es necesario.",
+    "status": "Denegado"
+  },
+  {
+    "id": "resp-ask-docs",
+    "title": "Solicitar Documentación",
+    "responseText": "Para poder continuar con su solicitud, es necesario que nos proporcione la documentación adicional que se detalla a continuación:",
+    "status": "Pendiente documentación"
+  }
+]

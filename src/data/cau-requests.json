@@ -1,0 +1,176 @@
+[
+  {
+    "id": "cau-1765665456919",
+    "subject": "Solicitud de Alta de vehículo no UTI en la terminal",
+    "userId": "4",
+    "userName": "Lucía Gómez",
+    "createdAt": "2025-12-13T22:37:36.919Z",
+    "status": "Pendiente documentación",
+    "category": "Operativas",
+    "type": "Solicitud de Alta de vehículo no UTI en la terminal",
+    "uti": "R0067BCN",
+    "attachments": [],
+    "customFieldsData": {},
+    "history": [
+      {
+        "id": "msg-1765665456919",
+        "author": "Director General",
+        "authorRole": "Admin",
+        "content": "popopop popopopo",
+        "createdAt": "2025-12-13T22:37:36.919Z"
+      },
+      {
+        "id": "msg-1768234095799",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Denegado\" por Director General.",
+        "createdAt": "2026-01-12T16:08:15.799Z"
+      },
+      {
+        "id": "msg-1768234097670",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Pendiente documentación\" por Director General.",
+        "createdAt": "2026-01-12T16:08:17.670Z"
+      }
+    ],
+    "slaExpiresAt": "2025-12-14T22:37:36.919Z"
+  },
+  {
+    "id": "cau-1765659285172",
+    "subject": "Solicitu de visita a Ignacio",
+    "userId": "4",
+    "userName": "Lucía Gómez",
+    "createdAt": "2025-12-13T20:54:45.172Z",
+    "status": "Archivada",
+    "category": "Operativas",
+    "type": "Solicitu de visita a Ignacio",
+    "uti": "",
+    "attachments": [],
+    "customFieldsData": {
+      "field-1765659142108": "Carlos de ongolf",
+      "field-1765659151482": "si",
+      "field-1765659166193": "no"
+    },
+    "history": [
+      {
+        "id": "msg-1765659285172",
+        "author": "Director General",
+        "authorRole": "Admin",
+        "content": "queremos atencion primeria",
+        "createdAt": "2025-12-13T20:54:45.172Z"
+      },
+      {
+        "id": "msg-1765659293074",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Denegado\" por Director General.",
+        "createdAt": "2025-12-13T20:54:53.074Z"
+      },
+      {
+        "id": "msg-1765659297351",
+        "author": "Director General",
+        "authorRole": "Admin",
+        "content": "no",
+        "createdAt": "2025-12-13T20:54:57.351Z"
+      },
+      {
+        "id": "msg-1765659298466",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Archivada\" por Director General.",
+        "createdAt": "2025-12-13T20:54:58.466Z"
+      }
+    ]
+  },
+  {
+    "id": "cau-1",
+    "subject": "Problema con DUA #12345",
+    "userId": "3",
+    "userName": "Transportista Juan",
+    "createdAt": "2024-07-30T10:00:00.000Z",
+    "status": "Pendiente documentación",
+    "category": "Aduaneras",
+    "type": "Solicitud de desbloqueo por otros motivos",
+    "attachments": [
+      {
+        "name": "DUA_12345.pdf",
+        "url": "#"
+      }
+    ],
+    "history": [
+      {
+        "id": "msg-1",
+        "author": "Transportista Juan",
+        "authorRole": "Usuario",
+        "content": "El documento de autoliquidación adjunto parece tener un error en el campo de valor declarado. ¿Pueden revisarlo?",
+        "createdAt": "2024-07-30T10:00:00.000Z"
+      },
+      {
+        "id": "msg-2",
+        "author": "Agente de Soporte Aduanas",
+        "authorRole": "Soporte Aduanas",
+        "content": "Recibido. Por favor, adjunte también la factura comercial para poder contrastar la información.",
+        "createdAt": "2024-07-30T11:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "cau-2",
+    "subject": "Consulta sobre documentación para carga peligrosa",
+    "userId": "4",
+    "userName": "Lucía Gómez",
+    "createdAt": "2024-07-29T15:00:00.000Z",
+    "status": "Aprobado",
+    "category": "Operativas",
+    "type": "Solicitud de información de camión (salida permitida)",
+    "uti": "AB-1234-CD",
+    "attachments": [],
+    "history": [
+      {
+        "id": "msg-3",
+        "author": "Lucía Gómez",
+        "authorRole": "Usuario",
+        "content": "Necesito saber qué documentos adicionales se requieren para un contenedor con mercancía IMO clase 3.",
+        "createdAt": "2024-07-29T15:00:00.000Z"
+      },
+      {
+        "id": "msg-4",
+        "author": "Director General",
+        "authorRole": "Admin",
+        "content": "Para IMO 3 necesita la 'Declaración de Mercancías Peligrosas' y la 'Ficha de Datos de Seguridad'. Su solicitud de salida ha sido pre-aprobada.",
+        "createdAt": "2024-07-30T16:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "cau-3",
+    "subject": "Urgente: Acceso denegado en TTP1",
+    "userId": "5",
+    "userName": "Carlos Fernández",
+    "createdAt": "2024-07-30T14:00:00.000Z",
+    "status": "En curso",
+    "category": "Operativas",
+    "type": "Solicitud de reparación de camión en la terminal",
+    "uti": "EF-5678-GH",
+    "attachments": [
+      {
+        "name": "autorizacion_conductor.pdf",
+        "url": "#"
+      },
+      {
+        "name": "foto_incidencia.jpg",
+        "url": "#"
+      }
+    ],
+    "history": [
+      {
+        "id": "msg-5",
+        "author": "Carlos Fernández",
+        "authorRole": "Usuario",
+        "content": "Mi conductor no puede acceder a la zona de importación. Su ID es 789123. Adjunto la autorización.",
+        "createdAt": "2024-07-30T14:00:00.000Z"
+      }
+    ]
+  }
+]

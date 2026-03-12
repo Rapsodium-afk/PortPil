@@ -1,0 +1,149 @@
+[
+  {
+    "id": "op-reparacion",
+    "title": "Solicitud de reparación de camión en la terminal",
+    "description": "Informar sobre una avería y solicitar asistencia.",
+    "category": "Operativas",
+    "requiresUti": true,
+    "requiresFile": false,
+    "customFields": [],
+    "estimatedResponseTime": 24,
+    "allowedRoles": [
+      "Agente de Aduanas",
+      "Operador Logístico"
+    ]
+  },
+  {
+    "id": "op-flota",
+    "title": "Solicitud de modificación de flota",
+    "description": "Añadir o eliminar vehículos de su flota autorizada.",
+    "category": "Operativas",
+    "requiresUti": false,
+    "requiresFile": true,
+    "customFields": [
+      {
+        "id": "excel-flota",
+        "name": "Archivo de Flota (Excel)",
+        "type": "file",
+        "required": true
+      }
+    ],
+    "estimatedResponseTime": 24
+  },
+  {
+    "id": "op-alta-no-uti",
+    "title": "Solicitud de Alta de vehículo no UTI en la terminal",
+    "description": "Solicitud anual para vehículos especiales.",
+    "category": "Operativas",
+    "requiresUti": true,
+    "requiresFile": false,
+    "customFields": [],
+    "estimatedResponseTime": 24
+  },
+  {
+    "id": "op-copia-recibo",
+    "category": "Operativas",
+    "title": "Solicitud de copia de recibo",
+    "requiresFile": false,
+    "requiresUti": false,
+    "description": "Pedir duplicados de recibos o justificantes de pago."
+  },
+  {
+    "id": "op-reclamacion",
+    "category": "Operativas",
+    "title": "Reclamación de facturas",
+    "requiresFile": false,
+    "requiresUti": false,
+    "description": "Discrepancias o errores en la facturación."
+  },
+  {
+    "id": "op-alta-logistica",
+    "category": "Operativas",
+    "title": "Solicitud de alta como flota logística",
+    "requiresFile": false,
+    "requiresUti": false,
+    "description": "Registrar una nueva empresa de transporte."
+  },
+  {
+    "id": "ad-salida",
+    "category": "Aduaneras",
+    "title": "Solicitud de autorización de salida (Notificación de C5)",
+    "requiresFile": false,
+    "requiresUti": true,
+    "description": "Notificar la salida de mercancía bajo control aduanero."
+  },
+  {
+    "id": "ad-info",
+    "category": "Aduaneras",
+    "title": "Solicitud de información de camión (salida permitida)",
+    "requiresFile": false,
+    "requiresUti": true,
+    "description": "Consultar si un vehículo está autorizado a salir."
+  },
+  {
+    "id": "ad-matricula",
+    "category": "Aduaneras",
+    "title": "Notificación de matrícula de contenedor (UTIS con contenedor declarado)",
+    "requiresFile": false,
+    "requiresUti": true,
+    "description": "Declarar la matrícula del contenedor asociado a una UTI."
+  },
+  {
+    "id": "ad-representante",
+    "category": "Aduaneras",
+    "title": "Notificación como representante de UTI (Para circuitos rojos aduaneros)",
+    "requiresFile": false,
+    "requiresUti": true,
+    "description": "Designarse como representante para inspecciones."
+  },
+  {
+    "id": "ad-desbloqueo",
+    "category": "Aduaneras",
+    "title": "Solicitud de desbloqueo por otros motivos",
+    "requiresFile": false,
+    "requiresUti": false,
+    "description": "Solicitudes de desbloqueo no contempladas en otros apartados."
+  },
+  {
+    "id": "ad-destruccion",
+    "category": "Aduaneras",
+    "title": "Notificación de mercancía para destrucción",
+    "requiresFile": false,
+    "requiresUti": false,
+    "description": "Informar sobre mercancía que será destruida."
+  },
+  {
+    "id": "type-1765659174256",
+    "title": "Solicitu de visita a Ignacio",
+    "description": "Para solicitar visitas a ignacio",
+    "category": "Operativas",
+    "requiresUti": false,
+    "requiresFile": false,
+    "customFields": [
+      {
+        "id": "field-1765659142108",
+        "name": "Nombre ",
+        "type": "text",
+        "required": false,
+        "validationType": "text",
+        "maxLength": 50
+      },
+      {
+        "id": "field-1765659151482",
+        "name": "le traes regalo",
+        "type": "text",
+        "required": false,
+        "validationType": "text",
+        "maxLength": 50
+      },
+      {
+        "id": "field-1765659166193",
+        "name": "el mundo es maravilloso",
+        "type": "text",
+        "required": false,
+        "validationType": "text",
+        "maxLength": 50
+      }
+    ]
+  }
+]

@@ -1,0 +1,89 @@
+
+[
+  {
+    "id": "1",
+    "name": "Admin",
+    "email": "admin@portpilot.test",
+    "roles": [
+      "Admin",
+      "Media Manager",
+      "Gestor Situacion",
+      "Operador Situacion"
+    ],
+    "password": "admin",
+    "status": "active",
+    "companyIds": [
+      "transport-com"
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Agente de Soporte Aduanas",
+    "email": "aduana@portpilot.test",
+    "roles": [
+      "Soporte Aduanas"
+    ],
+    "password": "aduana",
+    "status": "active",
+    "companyIds": []
+  },
+  {
+    "id": "3",
+    "name": "Transportista Juan",
+    "email": "user@portpilot.test",
+    "roles": [
+      "Transitario"
+    ],
+    "password": "user",
+    "status": "active",
+    "companyIds": []
+  },
+  {
+    "id": "4",
+    "name": "Lucía Gómez",
+    "email": "lucia.gomez@transport.com",
+    "roles": [
+      "Operador Logístico"
+    ],
+    "password": "password123",
+    "status": "active",
+    "companyIds": [
+      "transport-com"
+    ]
+  },
+  {
+    "id": "5",
+    "name": "Carlos Fernández",
+    "email": "carlos.f@logistics.co",
+    "roles": [
+      "Agente de Aduanas"
+    ],
+    "password": "password123",
+    "status": "active",
+    "companyIds": [
+      "logistics-co"
+    ]
+  },
+  {
+    "id": "6",
+    "name": "Validador Operativo",
+    "email": "operativo@portpilot.test",
+    "roles": [
+      "Soporte Operativo"
+    ],
+    "password": "password123",
+    "status": "active",
+    "companyIds": []
+  },
+  {
+    "id": "7",
+    "name": "paco",
+    "email": "paco@paco.es",
+    "roles": [
+      "Agente de Aduanas"
+    ],
+    "password": "123456",
+    "status": "active",
+    "companyIds": []
+  }
+]

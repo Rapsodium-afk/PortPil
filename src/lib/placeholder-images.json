@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "port-crane",
+      "description": "A large crane at a busy port, loading containers onto a ship.",
+      "imageUrl": "https://images.unsplash.com/photo-1615490865201-7e2adc366e83?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwb3J0JTIwY3JhbmV8ZW58MHx8fHwxNzY1NjQxNjI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "port crane"
+    },
+    {
+      "id": "login-background",
+      "description": "An aerial view of colorful shipping containers neatly arranged in a terminal.",
+      "imageUrl": "https://images.unsplash.com/photo-1583686298564-46fbffda0707?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzaGlwcGluZyUyMGNvbnRhaW5lcnN8ZW58MHx8fHwxNzY1NjQxNjI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shipping containers"
+    },
+    {
+      "id": "cargo-ship",
+      "description": "A massive cargo ship sailing on the open ocean, laden with containers.",
+      "imageUrl": "https://images.unsplash.com/photo-1670121180530-cfcba4438038?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjYXJnbyUyMHNoaXB8ZW58MHx8fHwxNzY1NjQxNjMwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cargo ship"
+    },
+    {
+      "id": "trucks-at-port",
+      "description": "A line of trucks waiting to be loaded at a container terminal.",
+      "imageUrl": "https://images.unsplash.com/photo-1561118303-3686864b417b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwb3J0JTIwdHJ1Y2tzfGVufDB8fHx8MTc2NTY0MTYyOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "port trucks"
+    }
+  ]
+}

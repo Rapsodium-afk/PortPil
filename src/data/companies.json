@@ -1,0 +1,24 @@
+
+[
+  {
+    "id": "transport-com",
+    "name": "Transport.com",
+    "taxId": "B12345678",
+    "accessControlId": "TCOM01",
+    "expedienteFiles": [
+      {
+        "name": "Contrato Marco 2024.pdf",
+        "url": "#",
+        "uploadedBy": "Admin",
+        "createdAt": "2024-07-22T10:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "id": "logistics-co",
+    "name": "Logistics.co",
+    "taxId": "B87654321",
+    "accessControlId": "LOGCO02",
+    "expedienteFiles": []
+  }
+]
