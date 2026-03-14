@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   Anchor, Bell, ChevronDown, LayoutDashboard, LogOut, MessageSquare, PanelLeft, Settings, 
   Ship, Users, FlaskConical, FolderKanban, Truck, Building2, User as UserIcon,
-  ShieldCheck, HardHat, Landmark, Megaphone, UserCheck, ClipboardList, ClipboardCheck
+  ShieldCheck, HardHat, Landmark, Megaphone, UserCheck, ClipboardList, ClipboardCheck,
+  UserPlus, QrCode
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { AdminImpersonationTool } from './admin-impersonation-tool';
@@ -45,9 +46,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const allItems = [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situacion', 'Operador Situacion'] as UserRole[] },
       { href: '/cau', label: 'CAU', icon: MessageSquare, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
+      { href: '/access-requests', label: 'Acceso Conductores', icon: UserPlus, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Agente de Aduanas'] as UserRole[] },
       { href: '/expediente', label: 'Mi Expediente', icon: FolderKanban, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[]},
       { href: '/flota', label: 'Gestor de Flotas', icon: Truck, roles: ['Operador Logístico', 'Admin'] as UserRole[] },
       { href: '/situacion', label: 'Actualizar Plazas', icon: ClipboardList, roles: ['Admin', 'Gestor Situacion', 'Operador Situacion'] as UserRole[] },
+      { href: '/admin/companies', label: 'Gestión Empresas', icon: Building2, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas'] as UserRole[] },
       { href: '/admin/users', label: 'Gestión Usuarios', icon: Users, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas'] as UserRole[] },
       { href: '/admin/settings', label: 'Ajustes', icon: Settings, roles: ['Admin'] as UserRole[] },
       { href: '/admin/api-test', label: 'Prueba de API', icon: FlaskConical, roles: ['Admin'] as UserRole[] },

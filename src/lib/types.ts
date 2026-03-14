@@ -229,3 +229,15 @@ export interface ImagePlaceholder {
   imageUrl: string;
   imageHint?: string;
 }
+
+export interface PedestrianAccessRequest {
+  id: string;
+  documentNumber: string; // DNI/NIE/Pasaporte
+  fullName: string;
+  phoneNumber: string;
+  uti: string; // Tractora o Remolque
+  visitDate: string;
+  companyId: string;
+  companyName: string;
+  createdAt: string;
+}

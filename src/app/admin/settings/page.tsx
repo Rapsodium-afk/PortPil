@@ -131,7 +131,6 @@ export default function AdminSettingsPage() {
               </form>
             </CardContent>
           </Card>
-          <CompaniesEditor initialCompanies={companies} onUpdate={fetchData} />
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
