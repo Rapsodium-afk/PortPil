@@ -11,9 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { writeData, readData } from '@/lib/actions';
+import { writeData, readData, testConnectionAction } from '@/lib/actions';
 import { Separator } from '@/components/ui/separator';
-import { testConnection } from '@/lib/database';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RefreshCw, AlertCircle } from 'lucide-react';
@@ -67,7 +66,7 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
       description: 'Conectando con MariaDB/MySQL...',
     });
     
-    const result = await testConnection(data);
+    const result = await testConnectionAction(data);
     
     if (result.success) {
       toast({

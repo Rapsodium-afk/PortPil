@@ -3,8 +3,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
-import { query } from './database';
-import type { SystemConfig, ModulePersistence, NewsPost } from './types';
+import { query, testConnection } from './database';
+import type { SystemConfig, ModulePersistence, NewsPost, DatabaseConfig } from './types';
 
 const dataPath = path.join(process.cwd(), 'src', 'data');
 
@@ -115,4 +115,8 @@ async function writeToDb(module: string, data: any): Promise<void> {
         default:
             throw new Error(`DB Write not implemented for module: ${module}`);
     }
+}
+
+export async function testConnectionAction(config: DatabaseConfig) {
+    return await testConnection(config);
 }

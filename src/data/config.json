@@ -1,6 +1,6 @@
 {
   "utiApiToken": "",
-  "portalName": "PortPilot CAU",
+  "portalName": "PortPilot v2",
   "portalDescription": "Centro de Atención al Usuario",
   "modulePersistence": {
     "users": "json",
