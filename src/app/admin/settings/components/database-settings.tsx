@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { writeData, readData, testConnectionAction } from '@/lib/actions';
+import { writeData, readData, testConnectionAction, syncDataFromJsonToDbAction } from '@/lib/actions';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -105,12 +105,7 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
     // In actions.ts, we already handled ON DUPLICATE KEY UPDATE in writeToDb.
     // We just need to trigger a read(json) and write(db).
     try {
-        const jsonData = await readData(`${module}.json`);
-        // We need a way to force DB writing even if mode is JSON, 
-        // or just temporarily switch mode.
-        // For now, let's assume the user switches to DB mode first, 
-        // then clicks sync (which will trigger writeData with DB mode active).
-        await writeData(`${module}.json`, jsonData);
+        await syncDataFromJsonToDbAction(module);
         toast({
           title: 'Sincronización completada',
           description: `Los datos de ${module} han sido migrados a la base de datos.`

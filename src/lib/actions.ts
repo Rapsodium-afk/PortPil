@@ -90,9 +90,6 @@ async function readFromDb<T>(module: string): Promise<T> {
 async function writeToDb(module: string, data: any): Promise<void> {
     switch (module) {
         case 'news':
-            // Logic for news write (could be a full sync or a single insert depending on how writeData is called)
-            // For now, let's assume writeData is used for full syncs in this architecture
-            // In a real app we'd want specific insert/update actions, but we keep compatibility with readData/writeData
             if (Array.isArray(data)) {
                 for (const post of data) {
                     await query(
@@ -119,4 +116,18 @@ async function writeToDb(module: string, data: any): Promise<void> {
 
 export async function testConnectionAction(config: DatabaseConfig) {
     return await testConnection(config);
+}
+
+export async function syncDataFromJsonToDbAction(module: string) {
+    const filename = `${module}.json`;
+    const filePath = await getFilePath(filename);
+    
+    // Force read from JSON file regardless of current persistence mode
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const jsonData = JSON.parse(fileContent);
+
+    // Force write to DB regardless of current persistence mode
+    await writeToDb(module, jsonData);
+    
+    return { success: true };
 }
