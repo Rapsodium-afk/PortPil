@@ -11,8 +11,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { writeData } from '@/lib/actions';
+import { writeData, readData } from '@/lib/actions';
 import { Separator } from '@/components/ui/separator';
+import { testConnection } from '@/lib/database';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { ModulePersistence } from '@/lib/types';
 
 const dbConfigSchema = z.object({
   dbHost: z.string().optional(),
@@ -54,13 +60,69 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
     });
   };
 
-  const handleTestConnection = () => {
-    // In a real implementation, this would call a server action to test the DB connection.
-    console.log('Simulating testing DB connection with:', form.getValues());
+  const handleTestConnection = async () => {
+    const data = form.getValues();
     toast({
-      title: 'Prueba de Conexión (Simulación)',
-      description: `Se intentaría conectar a ${form.getValues('dbHost')}. Revisa la consola para ver los datos.`,
+      title: 'Probando conexión...',
+      description: 'Conectando con MariaDB/MySQL...',
     });
+    
+    const result = await testConnection(data);
+    
+    if (result.success) {
+      toast({
+        title: 'Conexión exitosa',
+        description: 'Se ha podido establecer conexión con la base de datos.',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error de conexión',
+        description: result.message,
+      });
+    }
+  };
+
+  const togglePersistence = async (module: string, mode: 'json' | 'db') => {
+    const updatedConfig: SystemConfig = {
+      ...initialConfig,
+      modulePersistence: {
+        ...initialConfig.modulePersistence!,
+        [module]: mode
+      }
+    };
+    await writeData('config.json', updatedConfig);
+    toast({
+      title: `Modo ${mode.toUpperCase()} activado`,
+      description: `El módulo ${module} ahora utiliza persistencia en ${mode.toUpperCase()}.`
+    });
+  };
+
+  const handleSync = async (module: string) => {
+    toast({
+      title: 'Sincronizando...',
+      description: `Migrando datos de ${module} (JSON -> DB)...`
+    });
+    // In actions.ts, we already handled ON DUPLICATE KEY UPDATE in writeToDb.
+    // We just need to trigger a read(json) and write(db).
+    try {
+        const jsonData = await readData(`${module}.json`);
+        // We need a way to force DB writing even if mode is JSON, 
+        // or just temporarily switch mode.
+        // For now, let's assume the user switches to DB mode first, 
+        // then clicks sync (which will trigger writeData with DB mode active).
+        await writeData(`${module}.json`, jsonData);
+        toast({
+          title: 'Sincronización completada',
+          description: `Los datos de ${module} han sido migrados a la base de datos.`
+        });
+    } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error de sincronización',
+          description: error.message
+        });
+    }
   };
 
   return (
@@ -138,11 +200,66 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
                 </Button>
                 <Button type="button" variant="outline" onClick={handleTestConnection}>
                     <TestTube className="mr-2 h-4 w-4" />
-                    Probar Conexión (Sim)
+                    Probar Conexión Real
                 </Button>
             </div>
           </form>
         </Form>
+
+        <Separator className="my-8" />
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium">Migración y Persistencia por Módulo</h3>
+            <p className="text-sm text-muted-foreground">
+              Activa el uso de la base de datos para cada sección de forma independiente.
+            </p>
+          </div>
+
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Importante</AlertTitle>
+            <AlertDescription>
+              Asegúrate de que la conexión sea exitosa antes de activar el modo DB.
+              Se recomienda "Sincronizar Datos" inmediatamente después de activar el modo DB para no perder información.
+            </AlertDescription>
+          </Alert>
+
+          <div className="grid gap-6">
+            {(['users', 'news', 'cau', 'occupancy', 'fleet'] as const).map((module) => {
+              const currentMode = initialConfig.modulePersistence?.[module] || 'json';
+              return (
+                <div key={module} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="text-base capitalize">
+                      {module === 'cau' ? 'CAU (Tickets)' : 
+                       module === 'fleet' ? 'Gestión de Flotas' : 
+                       module === 'occupancy' ? 'Ocupación de Plazas' : 
+                       module === 'users' ? 'Gestión de Usuarios' : 'Noticias'}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Modo actual: <span className="font-medium uppercase">{currentMode}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleSync(module)}
+                      disabled={currentMode !== 'db'}
+                    >
+                      <RefreshCw className="mr-2 h-3 w-3" /> Sincronizar JSON {"->"} DB
+                    </Button>
+                    <Switch 
+                      checked={currentMode === 'db'}
+                      onCheckedChange={(checked) => togglePersistence(module, checked ? 'db' : 'json')}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

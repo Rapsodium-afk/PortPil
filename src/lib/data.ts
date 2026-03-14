@@ -7,23 +7,25 @@ import type { User, NewsPost, OccupancyZone, CauRequest, CauRequestType } from '
 
 // Mock Users - Used for initial seeding if JSON is empty
 export const mockUsers: User[] = [
-  { id: '1', name: 'Director General', email: 'admin@portpilot.test', role: 'Admin', password: 'admin' },
-  { id: '2', name: 'Agente de Aduanas', email: 'aduana@portpilot.test', role: 'Aduana', password: 'aduana' },
-  { id: '3', name: 'Transportista Juan', email: 'user@portpilot.test', role: 'Usuario', password: 'user' },
-  { id: '4', name: 'Lucía Gómez', email: 'lucia.gomez@transport.com', role: 'Usuario', password: 'password123' },
-  { id: '5', name: 'Carlos Fernández', email: 'carlos.f@logistics.co', role: 'Usuario', password: 'password123' },
+  { id: '1', name: 'Director General', email: 'admin@portpilot.test', roles: ['Admin'], status: 'active', companyIds: [], password: 'admin' },
+  { id: '2', name: 'Agente de Aduanas', email: 'aduana@portpilot.test', roles: ['Aduana'], status: 'active', companyIds: [], password: 'aduana' },
+  { id: '3', name: 'Transportista Juan', email: 'user@portpilot.test', roles: ['Usuario'], status: 'active', companyIds: [], password: 'user' },
+  { id: '4', name: 'Lucía Gómez', email: 'lucia.gomez@transport.com', roles: ['Usuario'], status: 'active', companyIds: [], password: 'password123' },
+  { id: '5', name: 'Carlos Fernández', email: 'carlos.f@logistics.co', roles: ['Usuario'], status: 'active', companyIds: [], password: 'password123' },
 ];
 
 // Mock News Feed - Used for initial seeding if JSON is empty
 export const mockNews: NewsPost[] = [
   {
     id: '1',
+    title: 'Retrasos en TTP2',
     content: 'Retrasos en puerta TTP2 por mantenimiento no programado. Se espera resolución en 2 horas.',
     author: 'Director General',
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: '2',
+    title: 'Nueva política de acceso',
     content: 'La nueva política de acceso para transportistas entrará en vigor el próximo lunes. Consulten la documentación.',
     author: 'Director General',
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),

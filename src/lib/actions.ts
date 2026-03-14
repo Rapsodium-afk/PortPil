@@ -3,6 +3,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
+import { query } from './database';
+import type { SystemConfig, ModulePersistence, NewsPost } from './types';
 
 const dataPath = path.join(process.cwd(), 'src', 'data');
 
@@ -14,12 +16,20 @@ async function getFilePath(filename: string) {
 }
 
 export async function readData<T>(filename: string): Promise<T> {
+    // Determine module from filename
+    const module = filename.split('.')[0] as keyof ModulePersistence;
+    const config = await readConfigOnly();
+    const persistenceMode = config.modulePersistence?.[module] || 'json';
+
+    if (persistenceMode === 'db') {
+        return readFromDb<T>(module);
+    }
+
     const filePath = await getFilePath(filename);
     try {
         const fileContent = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(fileContent);
     } catch (error) {
-        // If file doesn't exist, we can assume it's an empty array.
         if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
             return [] as T;
         }
@@ -29,13 +39,80 @@ export async function readData<T>(filename: string): Promise<T> {
 }
 
 export async function writeData(filename: string, data: any): Promise<void> {
-    const filePath = await getFilePath(filename);
+    const module = filename.split('.')[0] as keyof ModulePersistence;
+    const config = await readConfigOnly();
+    const persistenceMode = config.modulePersistence?.[module] || 'json';
+
+    if (persistenceMode === 'db') {
+        await writeToDb(module, data);
+    } else {
+        const filePath = await getFilePath(filename);
+        try {
+            await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        } catch (error) {
+            console.error(`Error writing to ${filename}:`, error);
+            throw new Error(`Could not write data to ${filename}`);
+        }
+    }
+    
+    revalidatePath('/', 'layout');
+}
+
+// Utility to read config without triggering recursion
+async function readConfigOnly(): Promise<SystemConfig> {
+    const filePath = path.join(dataPath, 'config.json');
     try {
-        await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-        // Revalidate all paths to ensure fresh data is fetched
-        revalidatePath('/', 'layout');
-    } catch (error) {
-        console.error(`Error writing to ${filename}:`, error);
-        throw new Error(`Could not write data to ${filename}`);
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        return JSON.parse(fileContent);
+    } catch {
+        return {} as SystemConfig;
+    }
+}
+
+async function readFromDb<T>(module: string): Promise<T> {
+    switch (module) {
+        case 'news':
+            const rows = await query<any[]>('SELECT * FROM news ORDER BY createdAt DESC');
+            return rows as T;
+        case 'users':
+            const users = await query<any[]>('SELECT * FROM users');
+            // Parse roles and companyIds if they are stored as JSON strings
+            return users.map(u => ({
+                ...u,
+                roles: typeof u.roles === 'string' ? JSON.parse(u.roles) : u.roles,
+                companyIds: typeof u.companyIds === 'string' ? JSON.parse(u.companyIds) : u.companyIds
+            })) as T;
+        default:
+            throw new Error(`DB Read not implemented for module: ${module}`);
+    }
+}
+
+async function writeToDb(module: string, data: any): Promise<void> {
+    switch (module) {
+        case 'news':
+            // Logic for news write (could be a full sync or a single insert depending on how writeData is called)
+            // For now, let's assume writeData is used for full syncs in this architecture
+            // In a real app we'd want specific insert/update actions, but we keep compatibility with readData/writeData
+            if (Array.isArray(data)) {
+                for (const post of data) {
+                    await query(
+                        'INSERT INTO news (id, title, content, author, createdAt, imageUrl) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE title=?, content=?, author=?, imageUrl=?',
+                        [post.id, post.title, post.content, post.author, post.createdAt, post.imageUrl, post.title, post.content, post.author, post.imageUrl]
+                    );
+                }
+            }
+            break;
+        case 'users':
+            if (Array.isArray(data)) {
+                for (const user of data) {
+                    await query(
+                        'INSERT INTO users (id, name, email, roles, status, companyIds) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=?, roles=?, status=?, companyIds=?',
+                        [user.id, user.name, user.email, JSON.stringify(user.roles), user.status, JSON.stringify(user.companyIds), user.name, JSON.stringify(user.roles), user.status, JSON.stringify(user.companyIds)]
+                    );
+                }
+            }
+            break;
+        default:
+            throw new Error(`DB Write not implemented for module: ${module}`);
     }
 }

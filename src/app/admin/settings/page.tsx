@@ -11,8 +11,16 @@ import PredefinedResponsesEditor from "./components/predefined-responses-editor"
 import WidgetsEditor from "./components/widgets-editor";
 import CompaniesEditor from "./components/companies-editor";
 import EmailSettings from "./components/email-settings";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DatabaseSettings from './components/database-settings';
 import HeroSettings from './components/hero-settings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { writeData } from "@/lib/actions";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminSettingsPage() {
   const [requestTypes, setRequestTypes] = useState<CauRequestType[]>([]);
@@ -57,9 +65,22 @@ export default function AdminSettingsPage() {
     setIsLoading(false);
   }, []);
 
+  const { toast } = useToast();
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleUpdatePortalInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!config) return;
+    
+    await writeData('config.json', config);
+    toast({
+      title: "Identidad del portal actualizada",
+      description: "El nombre y descripción del portal se han guardado."
+    });
+  };
   
   if (isLoading || !config) {
     return <div>Cargando ajustes del sistema...</div>;
@@ -71,23 +92,70 @@ export default function AdminSettingsPage() {
         <h1 className="text-3xl font-bold tracking-tight">Ajustes del Sistema</h1>
         <p className="text-muted-foreground">Configura los formularios, categorías y conexiones del sistema.</p>
       </div>
-      <HeroSettings initialConfig={config} images={images} onUpdate={fetchData} />
-      <Separator />
-      <DatabaseSettings initialConfig={config} />
-      <Separator />
-      <ApiSettings initialConfig={config} />
-      <Separator />
-      <EmailSettings initialConfig={config} />
-      <Separator />
-      <CompaniesEditor initialCompanies={companies} onUpdate={fetchData} />
-      <Separator />
-      <CategoriesEditor initialCategories={categories} />
-      <Separator />
-      <RequestTypesEditor initialRequestTypes={requestTypes} categories={categories} />
-      <Separator />
-      <PredefinedResponsesEditor initialResponses={predefinedResponses} />
-      <Separator />
-      <WidgetsEditor initialWidgets={widgets} />
+
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="content">Contenido</TabsTrigger>
+          <TabsTrigger value="database">Base de Datos</TabsTrigger>
+          <TabsTrigger value="advanced">Avanzado</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Identidad del Portal</CardTitle>
+              <CardDescription>Personaliza el nombre y la descripción principal de la aplicación.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdatePortalInfo} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="portalName">Nombre del Portal</Label>
+                  <Input 
+                    id="portalName" 
+                    value={config.portalName || ''} 
+                    onChange={(e) => setConfig({...config, portalName: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="portalDescription">Descripción</Label>
+                  <Input 
+                    id="portalDescription" 
+                    value={config.portalDescription || ''} 
+                    onChange={(e) => setConfig({...config, portalDescription: e.target.value})}
+                  />
+                </div>
+                <Button type="submit">
+                  <Save className="mr-2 h-4 w-4" /> Guardar Identidad
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+          <CompaniesEditor initialCompanies={companies} onUpdate={fetchData} />
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-6">
+          <HeroSettings initialConfig={config} images={images} onUpdate={fetchData} />
+          <Separator />
+          <WidgetsEditor initialWidgets={widgets} />
+          <Separator />
+          <CategoriesEditor initialCategories={categories} />
+          <Separator />
+          <RequestTypesEditor initialRequestTypes={requestTypes} categories={categories} />
+          <Separator />
+          <PredefinedResponsesEditor initialResponses={predefinedResponses} />
+        </TabsContent>
+
+        <TabsContent value="database" className="space-y-6">
+          <DatabaseSettings initialConfig={config} />
+        </TabsContent>
+
+        <TabsContent value="advanced" className="space-y-6">
+          <ApiSettings initialConfig={config} />
+          <Separator />
+          <EmailSettings initialConfig={config} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

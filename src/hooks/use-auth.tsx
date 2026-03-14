@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, Company } from '@/lib/types';
+import type { User, Company, SystemConfig, ModulePersistence } from '@/lib/types';
 import { readData, writeData } from '@/lib/actions';
 
 interface AuthContextType {
@@ -16,6 +16,9 @@ interface AuthContextType {
   userCompanies: Company[];
   activeCompany: Company | null;
   setActiveCompany: (company: Company | null) => void;
+  isAdmin: boolean;
+  isMediaManager: boolean;
+  config: SystemConfig | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -27,6 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [config, setConfig] = useState<SystemConfig | null>(null);
 
   const router = useRouter();
   
@@ -85,6 +89,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeAuth();
   }, [fetchAllUsers, loadUserContext, isClient]);
 
+  useEffect(() => {
+    const loadConfig = async () => {
+      const cfg = await readData<SystemConfig>('config.json');
+      setConfig(cfg);
+    };
+    loadConfig();
+  }, []);
+
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; message:string; }> => {
     const allUsers = await readData<User[]>('users.json');
     const foundUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -125,8 +137,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await writeData('users.json', newUsers);
   }
 
+  const isAdmin = !!appUser?.roles?.includes('Admin');
+  const isMediaManager = !!appUser?.roles?.includes('Media Manager');
+
   return (
-    <AuthContext.Provider value={{ user: appUser, login, logout, isLoading, users, setUsers, fetchAllUsers, userCompanies, activeCompany, setActiveCompany }}>
+    <AuthContext.Provider value={
+      {
+        user: appUser,
+        isLoading,
+        login,
+        logout,
+        users,
+        setUsers,
+        fetchAllUsers,
+        userCompanies,
+        activeCompany,
+        setActiveCompany,
+        isAdmin,
+        isMediaManager,
+        config
+      }
+    }>
       {children}
     </AuthContext.Provider>
   );

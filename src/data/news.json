@@ -1,5 +1,11 @@
-
 [
+  {
+    "id": "news-1773503646532",
+    "title": "Prueba de Noticia",
+    "content": "Este es un contenido de prueba para verificar la funcionalidad.",
+    "author": "Media Manager User",
+    "createdAt": "2026-03-14T15:54:06.532Z"
+  },
   {
     "id": "1",
     "content": "Retrasos en puerta TTP2 por mantenimiento no programado. Se espera resolución en 2 horas.",

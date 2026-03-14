@@ -5,7 +5,7 @@ import { readData, writeData } from '@/lib/actions';
 import type { User, UserRole, Company } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
-const registerableRoles: UserRole[] = ['Operador Logístico', 'Transitario', 'Agente de Aduanas'];
+const registerableRoles = ['Operador Logístico', 'Transitario', 'Agente de Aduanas'] as const;
 
 const registerSchema = z.object({
   name: z.string().min(3),

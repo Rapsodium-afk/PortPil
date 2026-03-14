@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Vehicle, VehicleType } from '@/lib/types';
 import { useEffect } from 'react';
 
-const vehicleTypes: VehicleType[] = ['Cabeza Tractora', 'Semirremolque', 'Conjunto Completo'];
+const vehicleTypes = ['Cabeza Tractora', 'Semirremolque', 'Conjunto Completo'] as const;
 
 interface AddVehicleDialogProps {
   isOpen: boolean;

@@ -58,7 +58,7 @@ export default async function Home() {
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-2 font-semibold">
             <Anchor className="h-6 w-6 text-primary" />
-            <span>PortPilot CAU</span>
+            <span>{config.portalName || 'PortPilot CAU'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
@@ -179,7 +179,7 @@ export default async function Home() {
       </main>
       <footer className="bg-muted border-t">
         <div className="container mx-auto py-6 px-4 text-center text-muted-foreground text-sm">
-          &copy; {new Date().getFullYear()} PortPilot CAU. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} {config.portalName || 'PortPilot CAU'}. Todos los derechos reservados.
         </div>
       </footer>
     </div>

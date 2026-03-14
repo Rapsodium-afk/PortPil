@@ -95,7 +95,6 @@ export function UserDialog({ isOpen, setIsOpen, onSave, user, allCompanies }: Us
       companyIds: data.companyIds || [],
       // Keep other properties that are not in the form
       registrationAttachments: user?.registrationAttachments,
-      expedienteFiles: user?.expedienteFiles,
     };
 
     onSave(userToSave);

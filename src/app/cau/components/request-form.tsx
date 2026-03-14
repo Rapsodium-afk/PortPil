@@ -49,9 +49,9 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
     if (!selectedRequestType) return baseSchema;
 
     const customFieldsSchema = (selectedRequestType.customFields || []).reduce((schema, field) => {
-        let fieldSchema;
+        let fieldSchema: z.ZodTypeAny;
         if (field.type === 'text') {
-            let stringSchema = z.string();
+            let stringSchema: any = z.string();
 
             if (field.maxLength) {
                 stringSchema = stringSchema.max(field.maxLength, `${field.name} no puede exceder los ${field.maxLength} caracteres.`);
@@ -64,7 +64,7 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
             }
             fieldSchema = stringSchema;
         } else if (field.type === 'file') {
-            let fileSchema = z.array(z.instanceof(File));
+            let fileSchema: any = z.array(z.instanceof(File));
              if (field.required) {
                 fileSchema = fileSchema.min(1, `Debe adjuntar al menos un archivo para ${field.name}.`);
             } else {

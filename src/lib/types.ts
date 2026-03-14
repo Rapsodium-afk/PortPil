@@ -1,4 +1,4 @@
-export type UserRole = 'Admin' | 'Soporte Operativo' | 'Soporte Aduanas' | 'Media Manager' | 'Operador Logístico' | 'Transitario' | 'Agente de Aduanas' | 'Gestor Situacion' | 'Operador Situacion';
+export type UserRole = 'Admin' | 'Soporte Operativo' | 'Soporte Aduanas' | 'Media Manager' | 'Operador Logístico' | 'Transitario' | 'Agente de Aduanas' | 'Gestor Situacion' | 'Operador Situacion' | 'Usuario' | 'Aduana';
 export type UserStatus = 'active' | 'pending';
 
 export interface Company {
@@ -12,6 +12,12 @@ export interface Company {
     uploadedBy: string; // Name of the admin/agent
     createdAt: string;
   }[];
+}
+
+export interface OccupancyZone {
+  id: string;
+  name: string;
+  percentage: number;
 }
 
 export interface User {
@@ -29,6 +35,7 @@ export interface User {
 
 export interface NewsPost {
   id: string;
+  title: string;
   content: string;
   author: string;
   createdAt: string;
@@ -137,14 +144,27 @@ export interface EmailConfig {
   fromEmail?: string;
 }
 
+export type PersistenceMode = 'json' | 'db';
+
+export interface ModulePersistence {
+  users: PersistenceMode;
+  news: PersistenceMode;
+  cau: PersistenceMode;
+  occupancy: PersistenceMode;
+  fleet: PersistenceMode;
+}
+
 export interface SystemConfig {
   utiApiToken: string;
   emailConfig?: EmailConfig;
   dbConfig?: DatabaseConfig;
+  modulePersistence?: ModulePersistence;
   situationInstructions?: string;
   heroTitle?: string;
   heroSubtitle?: string;
   heroImageId?: string;
+  portalName?: string;
+  portalDescription?: string;
 }
 
 export type UtiDetails = {

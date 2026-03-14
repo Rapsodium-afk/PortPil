@@ -29,9 +29,10 @@ interface UsersTableProps {
   onUsersChange: (users: User[]) => void;
   onApproveUser: (userId: string) => void;
   allCompanies: Company[];
+  onUpdate?: () => Promise<void> | void;
 }
 
-export default function UsersTable({ initialUsers, onUsersChange, onApproveUser, allCompanies }: UsersTableProps) {
+export default function UsersTable({ initialUsers, onUsersChange, onApproveUser, allCompanies, onUpdate }: UsersTableProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -141,7 +142,7 @@ export default function UsersTable({ initialUsers, onUsersChange, onApproveUser,
                           <CheckCircle className="mr-2 h-4 w-4" /> Aprobar
                         </Button>
                       )}
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
                             <MoreHorizontal className="h-4 w-4" />
@@ -149,8 +150,12 @@ export default function UsersTable({ initialUsers, onUsersChange, onApproveUser,
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openEditUserDialog(user)}>Editar Usuario</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEditUserDialog(user)}>
+                            Editar Usuario
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">
+                            Eliminar
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

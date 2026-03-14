@@ -20,28 +20,44 @@ interface NewsFeedProps {
 }
 
 export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
-  const { user } = useAuth();
+  const { user, isAdmin, isMediaManager } = useAuth();
+  const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  const [newPostAuthor, setNewPostAuthor] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [news, setNews] = useState(initialNews);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setNewPostAuthor(user.name);
+    }
+  }, [user]);
 
   useEffect(() => {
     setNews(initialNews);
   }, [initialNews]);
 
   const handleAddPost = () => {
-    if (newPostContent.trim() && user) {
+    if (newPostTitle.trim() && newPostContent.trim() && user) {
       const newPost: NewsPost = {
         id: `news-${Date.now()}`,
+        title: newPostTitle,
         content: newPostContent,
-        author: user.name,
+        author: newPostAuthor || user.name,
         createdAt: new Date().toISOString(),
         imageUrl: imageUrl || undefined,
       };
       const updatedNews = [newPost, ...news];
       onNewsChange(updatedNews);
+      setNewPostTitle('');
       setNewPostContent('');
+      setNewPostAuthor(user.name);
       setImageUrl('');
       setIsDialogOpen(false);
     }
@@ -54,7 +70,7 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
             <CardTitle>Noticias Operativas</CardTitle>
             <CardDescription>Últimas actualizaciones y avisos de la terminal.</CardDescription>
         </div>
-        {user && Array.isArray(user.roles) && user.roles.includes('Media Manager') && (
+        {mounted && user && (isAdmin || isMediaManager) && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -68,6 +84,15 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
+                    <Label htmlFor="title">Título de la Noticia</Label>
+                    <Input
+                      id="title"
+                      placeholder="Ej: Mantenimiento programado..."
+                      value={newPostTitle}
+                      onChange={(e) => setNewPostTitle(e.target.value)}
+                    />
+                </div>
+                <div className="space-y-2">
                     <Label htmlFor="content">Contenido</Label>
                     <Textarea
                       id="content"
@@ -75,6 +100,15 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
                       rows={4}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="author">Autor / Propietario</Label>
+                    <Input
+                      id="author"
+                      placeholder="Nombre del autor"
+                      value={newPostAuthor}
+                      onChange={(e) => setNewPostAuthor(e.target.value)}
                     />
                 </div>
                 <div className="space-y-2">
@@ -110,8 +144,9 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
                     <Image src={post.imageUrl} alt={`Imagen para ${post.id}`} fill className="object-cover" />
                 </div>
               )}
-              <div className="flex-1">
-                <p className="text-sm">{post.content}</p>
+              <div className="flex-1 w-full">
+                <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
+                <p className="text-sm text-foreground/90">{post.content}</p>
                 <div className="text-xs text-muted-foreground mt-2">
                   <span>Por {post.author}</span>
                   <span className="mx-1">·</span>

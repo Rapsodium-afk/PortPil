@@ -41,18 +41,28 @@ export function UtiField({ value, onChange, onValidationResult }: UtiFieldProps)
         throw new Error(response.error);
       }
       
-      const data = response.data?.[0];
+      const data = response.data?.[0] as any;
 
-      if (!data || !data.plate) {
+      if (!data || !(data.TRAILER_PLATE || data.plate)) {
         throw new Error('La matrícula no es válida o no se encontraron datos asociados.');
       }
       
-      if (data.state !== 'INSIDE') {
-        throw new Error(`La matrícula es válida, pero el vehículo no se encuentra dentro de la terminal (Estado: ${data.state}).`);
+      const status = data.STATUS || data.state;
+      if (status !== 'INSIDE') {
+        throw new Error(`La matrícula es válida, pero el vehículo no se encuentra dentro de la terminal (Estado: ${status}).`);
       }
       
-      setDetails(data);
-      onValidationResult(true, data);
+      const mappedDetails: UtiDetails = {
+        plate: data.TRAILER_PLATE || data.plate,
+        companyName: data.COMPANY || data.companyName,
+        entranceDate: data.ENTRY_DATE || data.entranceDate,
+        state: status,
+        zone: data.LOCATION || data.zone,
+        duration: data.DAYS_IN_TERMINAL !== undefined && data.DAYS_IN_TERMINAL !== null ? `${data.DAYS_IN_TERMINAL} días` : data.duration,
+      };
+
+      setDetails(mappedDetails);
+      onValidationResult(true, mappedDetails);
       setError(null);
 
     } catch (err) {

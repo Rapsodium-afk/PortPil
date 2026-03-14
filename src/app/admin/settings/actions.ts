@@ -15,7 +15,7 @@ export async function bulkAddCompanies(
   try {
     const existingCompanies = await readData<Company[]>('companies.json');
     const existingTaxIds = new Set(existingCompanies.map(c => c.taxId.toLowerCase()));
-    const existingAccessIds = new Set(existingCompanies.map(c => c.accessControlId.toLowerCase()));
+    const existingAccessIds = new Set(existingCompanies.filter(c => c.accessControlId).map(c => c.accessControlId!.toLowerCase()));
 
     const companiesToAdd: Company[] = [];
 
@@ -24,7 +24,7 @@ export async function bulkAddCompanies(
         console.warn(`Skipping company with duplicate Tax ID: ${companyData.taxId}`);
         continue; // Skip duplicates
       }
-       if (existingAccessIds.has(companyData.accessControlId.toLowerCase())) {
+       if (companyData.accessControlId && existingAccessIds.has(companyData.accessControlId.toLowerCase())) {
         console.warn(`Skipping company with duplicate Access Control ID: ${companyData.accessControlId}`);
         continue; // Skip duplicates
       }
@@ -45,7 +45,9 @@ export async function bulkAddCompanies(
 
       companiesToAdd.push(newCompany);
       existingTaxIds.add(newCompany.taxId.toLowerCase());
-      existingAccessIds.add(newCompany.accessControlId.toLowerCase());
+      if (newCompany.accessControlId) {
+        existingAccessIds.add(newCompany.accessControlId.toLowerCase());
+      }
     }
 
     if (companiesToAdd.length === 0) {
@@ -114,8 +116,14 @@ export async function addPlaceholderImage(
             return { success: false, message: 'La descripción y la imagen son obligatorias.' };
         }
 
-        const data = await readData<{ placeholderImages: ImagePlaceholder[] }>('placeholder-images.json');
+        let data = await readData<any>('placeholder-images.json');
         
+        if (Array.isArray(data) || !data) {
+            data = { placeholderImages: [] };
+        } else if (!data.placeholderImages) {
+            data.placeholderImages = [];
+        }
+
         const buffer = Buffer.from(await file.arrayBuffer());
         const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'hero');

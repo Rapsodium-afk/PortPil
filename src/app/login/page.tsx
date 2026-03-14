@@ -27,7 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, config } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -84,8 +84,8 @@ export default function LoginPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <Anchor className="h-8 w-8" />
           </div>
-          <CardTitle className="text-3xl font-bold">PortPilot CAU</CardTitle>
-          <CardDescription>Centro de Atención al Usuario</CardDescription>
+          <CardTitle className="text-3xl font-bold">{config?.portalName || 'PortPilot CAU'}</CardTitle>
+          <CardDescription>{config?.portalDescription || 'Centro de Atención al Usuario'}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

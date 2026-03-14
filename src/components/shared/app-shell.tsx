@@ -29,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserRole } from '@/lib/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, logout, userCompanies, activeCompany, setActiveCompany } = useAuth();
+  const { user, isLoading, logout, userCompanies, activeCompany, setActiveCompany, config } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
@@ -90,13 +90,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
-        </div>
+          <div className="flex items-center gap-2 font-semibold">
+            <Anchor className="h-6 w-6 text-primary" />
+            <span>{config?.portalName || 'PortPilot CAU'}</span>
+          </div>
       </div>
     );
   }
@@ -116,7 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" onClick={() => router.push('/')}>
             <Ship className="h-4 w-4" />
           </Button>
-          <span className={`font-semibold ${!isSidebarOpen && 'hidden'}`}>PortPilot CAU</span>
+          <span className={`font-semibold ${!isSidebarOpen && 'hidden'}`}>{config?.portalName || 'PortPilot CAU'}</span>
         </div>
         <nav className="flex-1 space-y-2 p-4">
           {navItems.map((item) => (

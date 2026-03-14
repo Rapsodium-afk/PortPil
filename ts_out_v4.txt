@@ -1,0 +1,5 @@
+﻿
+> nextn@0.1.0 typecheck
+> tsc --noEmit
+
+next.config.ts(8,3): error TS2353: Object literal may only specify known properties, and 'eslint' does not exist in type 'NextConfig'.
