@@ -48,7 +48,7 @@ interface HeroSettingsProps {
 
 const newImageSchema = z.object({
   description: z.string().min(1, 'La descripción es requerida.'),
-  imageUrl: z.string().url({ message: 'Debe ser una URL de imagen válida.' }),
+  imageFile: z.any().refine((val) => typeof window !== 'undefined' && val instanceof File, 'Debe seleccionar una imagen.'),
 });
 type NewImageFormValues = z.infer<typeof newImageSchema>;
 
@@ -66,7 +66,7 @@ export default function HeroSettings({ initialConfig, images, onUpdate }: HeroSe
     resolver: zodResolver(newImageSchema),
     defaultValues: {
       description: '',
-      imageUrl: '',
+      imageFile: undefined as any,
     },
   });
 
@@ -93,12 +93,17 @@ export default function HeroSettings({ initialConfig, images, onUpdate }: HeroSe
 
   const handleAddImage = async (data: NewImageFormValues) => {
     setIsSavingImage(true);
-    const result = await addPlaceholderImage(data);
+    const formData = new FormData();
+    formData.append('description', data.description);
+    if (data.imageFile) {
+      formData.append('image', data.imageFile);
+    }
+    const result = await addPlaceholderImage(formData);
     if (result.success) {
       toast({ title: 'Imagen añadida', description: 'La nueva imagen ya está disponible en el selector.' });
       onUpdate();
       setIsAddImageOpen(false);
-      newImageForm.reset({ description: '', imageUrl: '' });
+      newImageForm.reset();
     } else {
       toast({ variant: 'destructive', title: 'Error al añadir imagen', description: result.message });
     }
@@ -186,18 +191,23 @@ export default function HeroSettings({ initialConfig, images, onUpdate }: HeroSe
                                 />
                                <FormField
                                   control={newImageForm.control}
-                                  name="imageUrl"
-                                  render={({ field }) => (
+                                  name="imageFile"
+                                  render={({ field: { value, onChange, ...fieldProps } }) => (
                                     <FormItem>
-                                      <FormLabel>URL de la Imagen</FormLabel>
-                                       <div className="relative">
-                                          <LinkIcon className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                                          <FormControl>
-                                            <Input {...field} placeholder="https://ejemplo.com/imagen.jpg" className="pl-8" />
-                                          </FormControl>
-                                       </div>
-                                       <FormDescription>
-                                          Sube tu imagen a un servicio de hosting y pega la URL directa aquí.
+                                      <FormLabel>Archivo de Imagen</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          {...fieldProps} 
+                                          type="file" 
+                                          accept="image/*" 
+                                          onChange={(event) => {
+                                              const file = event.target.files?.[0];
+                                              onChange(file);
+                                          }} 
+                                        />
+                                      </FormControl>
+                                      <FormDescription>
+                                          Selecciona una imagen de tu equipo (JPG, PNG, WEBP).
                                       </FormDescription>
                                       <FormMessage />
                                     </FormItem>

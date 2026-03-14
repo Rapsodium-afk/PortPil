@@ -134,3 +134,4 @@ Esta es la funcionalidad central.
 - Una página de utilidad simple, protegida por rol.
 - Debe tener un input para una matrícula y un botón.
 - Al hacer clic, debe llamar a la misma Server Action de validación de UTI y mostrar la **respuesta JSON cruda** devuelta por la API, ya sea éxito o error. Esto es crucial para la depuración.
+Este prompt esta desactualizado y solo muestra la parte inicial de la creacion de la aplicacion. No existe prompt actualizado.

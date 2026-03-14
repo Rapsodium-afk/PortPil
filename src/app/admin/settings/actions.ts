@@ -3,6 +3,8 @@
 import { readData, writeData } from '@/lib/actions';
 import type { Company, ImagePlaceholder } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 // This is the data structure we expect from the client after parsing the CSV
 type NewCompanyData = Omit<Company, 'id'>;
@@ -102,20 +104,32 @@ export async function addCompanyExpedienteFiles(
 }
 
 export async function addPlaceholderImage(
-    imageData: { description: string; imageUrl: string; }
+    formData: FormData
 ): Promise<{ success: boolean; message: string; }> {
     try {
+        const description = formData.get('description') as string;
+        const file = formData.get('image') as File | null;
+
+        if (!description || !file || file.size === 0) {
+            return { success: false, message: 'La descripción y la imagen son obligatorias.' };
+        }
+
         const data = await readData<{ placeholderImages: ImagePlaceholder[] }>('placeholder-images.json');
         
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'hero');
+        
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), buffer);
+
+        const imageUrl = `/uploads/hero/${filename}`;
+
         const newImage: ImagePlaceholder = {
             id: `img-${Date.now()}`,
-            description: imageData.description,
-            imageUrl: imageData.imageUrl,
+            description: description,
+            imageUrl: imageUrl,
         };
-
-        if (data.placeholderImages.some(img => img.imageUrl.toLowerCase() === newImage.imageUrl.toLowerCase())) {
-            return { success: false, message: 'La URL de esa imagen ya existe. Por favor, usa otra.' };
-        }
         
         data.placeholderImages.push(newImage);
         
