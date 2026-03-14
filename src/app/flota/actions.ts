@@ -4,6 +4,13 @@ import { readData, writeData } from '@/lib/actions';
 import type { Fleet, Vehicle } from '@/lib/types';
 
 /**
+ * Retrieves all fleets in the system.
+ */
+export async function getAllFleets(): Promise<Fleet[]> {
+    return await readData<Fleet[]>('fleets.json');
+}
+
+/**
  * Retrieves the fleet for a specific company.
  * If no fleet exists, it creates an empty one.
  */

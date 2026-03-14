@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Vehicle, VehicleType } from '@/lib/types';
 import { useEffect } from 'react';
 
-const vehicleTypes = ['Cabeza Tractora', 'Semirremolque', 'Conjunto Completo'] as const;
+const truckTypes = ['Cabeza Tractora', 'Semirremolque', 'Piso Móvil', 'Cisterna', 'Frigorífico', 'Lona', 'Portacontenedores', 'Cuba', 'Bañera', 'Portacoches', 'Tautliner'] as const;
+const supportTypes = ['Motocicleta', 'Turismo/Otros', 'Furgoneta'] as const;
+const allVehicleTypes = [...truckTypes, ...supportTypes];
 
 interface AddVehicleDialogProps {
   isOpen: boolean;
@@ -27,7 +29,8 @@ export function AddVehicleDialog({ isOpen, setIsOpen, onAddVehicle, existingPlat
         (plate) => !existingPlates.includes(plate.toUpperCase()),
         'Esta matrícula ya está registrada en tu flota.'
     ),
-    type: z.enum(vehicleTypes, { required_error: 'Debes seleccionar un tipo de vehículo.' }),
+    type: z.enum(allVehicleTypes as unknown as [string, ...string[]], { required_error: 'Debes seleccionar un tipo de vehículo.' }),
+    expiryDate: z.string().optional(),
   });
 
   type FormValues = z.infer<typeof formSchema>;
@@ -36,8 +39,12 @@ export function AddVehicleDialog({ isOpen, setIsOpen, onAddVehicle, existingPlat
     resolver: zodResolver(formSchema),
     defaultValues: {
       plate: '',
+      expiryDate: '',
     },
   });
+  
+  const selectedType = form.watch('type');
+  const isSupportVehicle = supportTypes.includes(selectedType as any);
   
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +53,11 @@ export function AddVehicleDialog({ isOpen, setIsOpen, onAddVehicle, existingPlat
   }, [isOpen, form]);
 
   const onSubmit = (data: FormValues) => {
-    onAddVehicle({ plate: data.plate.toUpperCase(), type: data.type });
+    onAddVehicle({ 
+        plate: data.plate.toUpperCase(), 
+        type: data.type as any,
+        expiryDate: isSupportVehicle ? data.expiryDate : undefined
+    });
     setIsOpen(false);
     form.reset();
   };
@@ -88,7 +99,7 @@ export function AddVehicleDialog({ isOpen, setIsOpen, onAddVehicle, existingPlat
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {vehicleTypes.map(type => (
+                        {allVehicleTypes.map(type => (
                             <SelectItem key={type} value={type}>{type}</SelectItem>
                         ))}
                         </SelectContent>
@@ -97,6 +108,21 @@ export function AddVehicleDialog({ isOpen, setIsOpen, onAddVehicle, existingPlat
                     </FormItem>
                 )}
             />
+            {isSupportVehicle && (
+                <FormField
+                    control={form.control}
+                    name="expiryDate"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Fecha de Vencimiento de Autorización</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
             <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
                 <Button type="submit">Añadir Vehículo</Button>

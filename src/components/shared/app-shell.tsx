@@ -8,6 +8,7 @@ import {
   ShieldCheck, HardHat, Landmark, Megaphone, UserCheck, ClipboardList, ClipboardCheck
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { AdminImpersonationTool } from './admin-impersonation-tool';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserRole } from '@/lib/types';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, logout, userCompanies, activeCompany, setActiveCompany, config } = useAuth();
+  const { user, roles, isLoading, logout, userCompanies, activeCompany, setActiveCompany, config } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
@@ -52,17 +53,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       { href: '/admin/api-test', label: 'Prueba de API', icon: FlaskConical, roles: ['Admin'] as UserRole[] },
     ];
 
-    if (!user || !Array.isArray(user.roles)) return [];
+    if (!user || !Array.isArray(roles)) return [];
 
-    return allItems.filter(item => item.roles.some(role => user.roles.includes(role)));
+    return allItems.filter(item => item.roles.some(role => roles.includes(role)));
 
-  }, [user]);
+  }, [user, roles]);
 
   const RoleIcon = useMemo(() => {
-    if (!user || !Array.isArray(user.roles) || user.roles.length === 0) {
+    if (!user || !Array.isArray(roles) || roles.length === 0) {
       return <UserIcon className="h-5 w-5" />;
     }
-    const role = user.roles[0];
+    const role = roles[0];
     switch (role) {
       case 'Admin':
         return <ShieldCheck className="h-5 w-5" />;
@@ -85,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       default:
         return <UserIcon className="h-5 w-5" />;
     }
-  }, [user]);
+  }, [user, roles]);
 
   if (isLoading || !user) {
     return (
@@ -156,6 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="sr-only">Toggle sidebar</span>
             </Button>
           <div className="flex items-center gap-4">
+            <AdminImpersonationTool />
              {userCompanies.length > 1 && (
                 <Select value={activeCompany?.id} onValueChange={handleCompanyChange}>
                     <SelectTrigger className="w-[180px] h-9">
@@ -186,7 +188,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </Avatar>
                   <div className="hidden flex-col items-start md:flex">
                     <span className="text-sm font-medium">{user.name}</span>
-                    <span className="text-xs text-muted-foreground">{Array.isArray(user.roles) ? user.roles.join(', ') : ''}</span>
+                    <span className="text-xs text-muted-foreground">{Array.isArray(roles) ? roles.join(', ') : ''}</span>
                   </div>
                   <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
                 </Button>

@@ -145,5 +145,46 @@
         "maxLength": 50
       }
     ]
+  },
+  {
+    "id": "type-1773513752163",
+    "title": "Visita a Instalaciones",
+    "description": "Solicitud de visita oficial a instalaciones",
+    "category": "Direccion",
+    "requiresUti": false,
+    "requiresFile": false,
+    "customFields": [
+      {
+        "id": "field-1773513711983",
+        "name": "Nombre de la visita",
+        "type": "text",
+        "required": true,
+        "validationType": "text",
+        "maxLength": 50
+      },
+      {
+        "id": "field-1773513726611",
+        "name": "Fecha de la visita",
+        "type": "text",
+        "required": true,
+        "validationType": "alphanumeric",
+        "maxLength": 50
+      },
+      {
+        "id": "field-1773513741475",
+        "name": "Descripcion de la visita",
+        "type": "text",
+        "required": true,
+        "validationType": "alphanumeric",
+        "maxLength": 50
+      }
+    ],
+    "estimatedResponseTime": 720,
+    "allowedRoles": [
+      "Operador Logístico",
+      "Transitario",
+      "Agente de Aduanas",
+      "Admin"
+    ]
   }
 ]

@@ -199,7 +199,7 @@ export interface Widget {
   content: string;
 }
 
-export type VehicleType = 'Cabeza Tractora' | 'Semirremolque' | 'Conjunto Completo';
+export type VehicleType = 'Cabeza Tractora' | 'Semirremolque' | 'Piso Móvil' | 'Cisterna' | 'Frigorífico' | 'Lona' | 'Portacontenedores' | 'Cuba' | 'Bañera' | 'Portacoches' | 'Tautliner' | 'Motocicleta' | 'Turismo/Otros' | 'Furgoneta';
 export type VehicleStatus = 'Activo' | 'Inactivo';
 
 export interface FleetHistoryEntry {
@@ -213,6 +213,9 @@ export interface Vehicle {
   type: VehicleType;
   status: VehicleStatus;
   history: FleetHistoryEntry[];
+  expiryDate?: string; // For support vehicles (annual authorization)
+  companyId?: string;
+  companyName?: string;
 }
 
 export interface Fleet {

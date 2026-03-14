@@ -19,6 +19,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isMediaManager: boolean;
   config: SystemConfig | null;
+  impersonation: { role: string | null; companyId: string | null };
+  setImpersonation: (role: string | null, companyId: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
+  const [impersonation, setImpersonationState] = useState<{ role: string | null; companyId: string | null }>({ role: null, companyId: null });
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<SystemConfig | null>(null);
 
@@ -137,12 +140,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await writeData('users.json', newUsers);
   }
 
+  const setImpersonation = (role: string | null, companyId: string | null) => {
+    if (!appUser?.roles.includes('Admin')) return;
+    setImpersonationState({ role, companyId });
+    if (companyId) {
+      const company = userCompanies.find(c => c.id === companyId);
+      if (company) setActiveCompanyState(company);
+    } else {
+      loadUserContext(appUser);
+    }
+  };
+
   const isAdmin = !!appUser?.roles?.includes('Admin');
   const isMediaManager = !!appUser?.roles?.includes('Media Manager');
 
   return (
-    <AuthContext.Provider value={
-      {
+    <AuthContext.Provider value={{
         user: appUser,
         isLoading,
         login,
@@ -155,9 +168,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setActiveCompany,
         isAdmin,
         isMediaManager,
-        config
-      }
-    }>
+        config,
+        impersonation,
+        setImpersonation
+      }}>
       {children}
     </AuthContext.Provider>
   );
@@ -168,5 +182,29 @@ export const useAuth = () => {
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context;
+  
+  const { user, impersonation } = context;
+
+  // Derive roles and flags based on impersonation
+  const roles = impersonation.role ? [impersonation.role] : (user?.roles || []);
+  const isAdmin = roles.includes('Admin');
+  const isSoporteOperativo = roles.includes('Soporte Operativo');
+  const isSoporteAduanas = roles.includes('Soporte Aduanas');
+  const isMediaManager = roles.includes('Media Manager');
+  const isOperadorLogistico = roles.includes('Operador Logístico');
+  const isSituacion = roles.includes('Gestor Situacion') || roles.includes('Operador Situacion');
+  const isAduana = roles.includes('Aduana');
+
+  return {
+    ...context,
+    roles,
+    isAdmin,
+    isSoporteOperativo,
+    isSoporteAduanas,
+    isMediaManager,
+    isOperadorLogistico,
+    isSituacion,
+    isAduana,
+    isImpersonating: !!impersonation.role
+  };
 };

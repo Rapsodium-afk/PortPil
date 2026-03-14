@@ -1,5 +1,32 @@
 [
   {
+    "id": "cau-1773513870014",
+    "subject": "Visita a Instalaciones",
+    "userId": "4",
+    "userName": "Lucía Gómez",
+    "createdAt": "2026-03-14T18:44:30.014Z",
+    "status": "Pendiente",
+    "category": "Direccion",
+    "type": "Visita a Instalaciones",
+    "uti": "",
+    "attachments": [],
+    "customFieldsData": {
+      "field-1773513711983": "blop",
+      "field-1773513726611": "adada",
+      "field-1773513741475": "qweqeq"
+    },
+    "history": [
+      {
+        "id": "msg-1773513870014",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "asdadasdoioioioio",
+        "createdAt": "2026-03-14T18:44:30.014Z"
+      }
+    ],
+    "slaExpiresAt": "2026-04-13T18:44:30.014Z"
+  },
+  {
     "id": "cau-1765665456919",
     "subject": "Solicitud de Alta de vehículo no UTI en la terminal",
     "userId": "4",

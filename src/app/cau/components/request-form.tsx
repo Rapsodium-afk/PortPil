@@ -237,14 +237,21 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
   }, [requestTypes, user]);
 
   const groupedRequestTypes = useMemo(() => {
-    return filteredRequestTypes.reduce((acc, type) => {
-        if (!acc[type.category]) {
-            acc[type.category] = [];
+    const groups: Record<string, CauRequestType[]> = {};
+    
+    // Initialize groups with all known categories to ensure they show up even if empty
+    categories.forEach(cat => {
+        groups[cat.name] = [];
+    });
+
+    filteredRequestTypes.forEach(type => {
+        if (!groups[type.category]) {
+            groups[type.category] = [];
         }
-        acc[type.category].push(type);
-        return acc;
-    }, {} as Record<string, CauRequestType[]>);
-  }, [filteredRequestTypes]);
+        groups[type.category].push(type);
+    });
+    return groups;
+  }, [filteredRequestTypes, categories]);
 
   const categoryNames = categories.map(c => c.name);
   

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { PlusCircle, History, ToggleLeft, ToggleRight } from 'lucide-react';
-import { format } from 'date-fns';
+import { PlusCircle, History, AlertTriangle, Calendar, Info } from 'lucide-react';
+import { format, isBefore, parseISO, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Vehicle } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,20 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
 import { AddVehicleDialog } from './add-vehicle-dialog';
 import { VehicleHistoryDialog } from './vehicle-history-dialog';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
 
 interface FleetTableProps {
   vehicles: Vehicle[];
   onVehiclesChange: (vehicles: Vehicle[]) => void;
+  showCompanyColumn?: boolean;
 }
 
-export function FleetTable({ vehicles, onVehiclesChange }: FleetTableProps) {
+export function FleetTable({ vehicles, onVehiclesChange, showCompanyColumn }: FleetTableProps) {
   const { user } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [historyVehicle, setHistoryVehicle] = useState<Vehicle | null>(null);
@@ -94,9 +101,11 @@ export function FleetTable({ vehicles, onVehiclesChange }: FleetTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
+                {showCompanyColumn && <TableHead>Empresa</TableHead>}
                 <TableHead>Matrícula</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Vencimiento</TableHead>
                 <TableHead>Última Acción</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -104,39 +113,75 @@ export function FleetTable({ vehicles, onVehiclesChange }: FleetTableProps) {
             <TableBody>
               {vehicles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    No hay vehículos en tu flota. Empieza añadiendo uno.
+                  <TableCell colSpan={showCompanyColumn ? 7 : 6} className="h-24 text-center text-muted-foreground">
+                    No hay vehículos en la flota.
                   </TableCell>
                 </TableRow>
               ) : (
-                vehicles.map(vehicle => (
-                  <TableRow key={vehicle.plate}>
-                    <TableCell className="font-mono">{vehicle.plate}</TableCell>
-                    <TableCell>{vehicle.type}</TableCell>
-                    <TableCell>
-                      <Badge variant={vehicle.status === 'Activo' ? 'default' : 'secondary'}>
-                        {vehicle.status}
-                      </Badge>
-                    </TableCell>
-                     <TableCell>
-                        {format(new Date(vehicle.history[vehicle.history.length-1].performedAt), 'dd MMM yyyy, HH:mm', { locale: es })}
-                     </TableCell>
-                    <TableCell className="text-right flex items-center justify-end gap-2">
-                      <div className="flex items-center gap-2">
-                        <ToggleLeft className="h-4 w-4 text-muted-foreground"/>
-                        <Switch
-                            checked={vehicle.status === 'Activo'}
-                            onCheckedChange={(checked) => handleStatusChange(vehicle.plate, checked)}
-                            aria-label={`Estado de ${vehicle.plate}`}
-                        />
-                        <ToggleRight className="h-4 w-4 text-muted-foreground"/>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => openHistoryDialog(vehicle)}>
-                        <History className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                vehicles.map(vehicle => {
+                  const isExpired = vehicle.expiryDate ? isBefore(parseISO(vehicle.expiryDate), new Date()) : false;
+                  const isSoonExpiring = vehicle.expiryDate ? (!isExpired && isBefore(parseISO(vehicle.expiryDate), addMonths(new Date(), 1))) : false;
+
+                  return (
+                    <TableRow key={vehicle.plate} className={isExpired ? "bg-destructive/10" : ""}>
+                      {showCompanyColumn && <TableCell className="font-semibold">{vehicle.companyName || '-'}</TableCell>}
+                      <TableCell className="font-mono flex items-center gap-2">
+                        {vehicle.plate}
+                        {isExpired && (
+                           <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger><AlertTriangle className="h-4 w-4 text-destructive" /></TooltipTrigger>
+                              <TooltipContent>Autorización CADUCADA</TooltipContent>
+                            </Tooltip>
+                           </TooltipProvider>
+                        )}
+                        {isSoonExpiring && (
+                           <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger><Info className="h-4 w-4 text-yellow-500" /></TooltipTrigger>
+                              <TooltipContent>Autorización próxima a caducar</TooltipContent>
+                            </Tooltip>
+                           </TooltipProvider>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] whitespace-nowrap">
+                            {vehicle.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={vehicle.status === 'Activo' && !isExpired ? 'default' : 'secondary'}>
+                          {isExpired ? 'Caducado' : vehicle.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {vehicle.expiryDate ? (
+                            <div className={`flex items-center gap-1 text-xs ${isExpired ? 'text-destructive font-bold' : isSoonExpiring ? 'text-yellow-600 font-medium' : ''}`}>
+                                <Calendar className="h-3 w-3" />
+                                {format(parseISO(vehicle.expiryDate), 'dd/MM/yyyy')}
+                            </div>
+                        ) : (
+                            <span className="text-muted-foreground text-xs italic">N/A (Fact. Mensual)</span>
+                        )}
+                      </TableCell>
+                       <TableCell className="text-xs text-muted-foreground">
+                          {format(new Date(vehicle.history[vehicle.history.length-1].performedAt), 'dd MMM yyyy', { locale: es })}
+                       </TableCell>
+                      <TableCell className="text-right flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                              checked={vehicle.status === 'Activo'}
+                              onCheckedChange={(checked) => handleStatusChange(vehicle.plate, checked)}
+                              aria-label={`Estado de ${vehicle.plate}`}
+                          />
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => openHistoryDialog(vehicle)}>
+                          <History className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
