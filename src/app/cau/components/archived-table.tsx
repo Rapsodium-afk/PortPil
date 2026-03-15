@@ -29,7 +29,7 @@ export default function ArchivedTable({ initialRequests, onUpdateRequests }: Arc
     setRequests(initialRequests);
   }, [initialRequests]);
   
-  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Soporte Operativo') || user?.roles.includes('Soporte Aduanas');
+  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Soporte') || user?.roles.includes('Soporte');
   
   const archivedRequests = requests
     .filter(r => r.status === 'Archivada')

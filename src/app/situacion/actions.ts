@@ -1,8 +1,9 @@
 'use server';
 
 import { readData, writeData } from "@/lib/actions";
-import type { SituationZone, ZoneStatus, OperatingStatus, SystemConfig } from "@/lib/types";
+import type { SituationZone, ZoneStatus, OperatingStatus, SystemConfig, User } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+import { notifyRoles } from "@/lib/email-service";
 
 type UpdateSituationPayload = {
   id: string;
@@ -32,6 +33,16 @@ export async function updateSituation(payload: UpdateSituationPayload): Promise<
     revalidatePath('/dashboard');
     revalidatePath('/situacion');
     revalidatePath('/');
+
+    // Notify admins of the update
+    try {
+        await notifyRoles(['Admin', 'Gestor Situación'], 'notifyFleetMovementsEmail', {
+            // No variables needed for this template for now, but we pass an empty object or any generic info
+            updatedAt: now
+        });
+    } catch (e) {
+        console.error('Error sending movement notification:', e);
+    }
 
     return { success: true, message: 'Situación de zonas actualizada correctamente.' };
   } catch (error) {

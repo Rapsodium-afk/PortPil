@@ -23,7 +23,12 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Building2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const allRoles: UserRole[] = ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situacion', 'Operador Situacion'];
+const allRoles: UserRole[] = ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Media Manager', 'Operador Logístico', 'Transitario',  'Agente de Aduanas',
+  'Gestor Situación',
+  'Operador Situación',
+  'Usuario',
+  'Aduana',
+];
 
 const userSchema = z.object({
   name: z.string().min(3, { message: 'El nombre es requerido.' }),

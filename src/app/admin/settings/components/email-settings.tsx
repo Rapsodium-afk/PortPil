@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { writeData } from '@/lib/actions';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { MessageSquare, Truck, QrCode, AlertTriangle } from 'lucide-react';
 
 const emailConfigSchema = z.object({
   smtpHost: z.string().optional(),
@@ -21,6 +23,13 @@ const emailConfigSchema = z.object({
   smtpUser: z.string().optional(),
   smtpPassword: z.string().optional(),
   fromEmail: z.string().email({ message: 'Debe ser un email válido.' }).optional().or(z.literal('')),
+  defaultNotificationPreferences: z.object({
+    notifyCauEmail: z.boolean(),
+    notifyQrAccessEmail: z.boolean(),
+    notifyFleetUpdatesEmail: z.boolean(),
+    notifyFleetMovementsEmail: z.boolean(),
+    notifyCauReplyEmail: z.boolean(),
+  }),
 });
 
 type EmailConfigFormValues = z.infer<typeof emailConfigSchema>;
@@ -41,13 +50,27 @@ export default function EmailSettings({ initialConfig }: EmailSettingsProps) {
       smtpUser: initialConfig.emailConfig?.smtpUser || '',
       smtpPassword: initialConfig.emailConfig?.smtpPassword || '',
       fromEmail: initialConfig.emailConfig?.fromEmail || '',
+      defaultNotificationPreferences: {
+        notifyCauEmail: initialConfig.defaultNotificationPreferences?.notifyCauEmail ?? true,
+        notifyQrAccessEmail: initialConfig.defaultNotificationPreferences?.notifyQrAccessEmail ?? true,
+        notifyFleetUpdatesEmail: initialConfig.defaultNotificationPreferences?.notifyFleetUpdatesEmail ?? true,
+        notifyFleetMovementsEmail: initialConfig.defaultNotificationPreferences?.notifyFleetMovementsEmail ?? true,
+        notifyCauReplyEmail: initialConfig.defaultNotificationPreferences?.notifyCauReplyEmail ?? true,
+      },
     },
   });
 
   const onSave = async (data: EmailConfigFormValues) => {
     const updatedConfig: SystemConfig = {
       ...initialConfig,
-      emailConfig: data,
+      emailConfig: {
+          smtpHost: data.smtpHost,
+          smtpPort: data.smtpPort,
+          smtpUser: data.smtpUser,
+          smtpPassword: data.smtpPassword,
+          fromEmail: data.fromEmail,
+      },
+      defaultNotificationPreferences: data.defaultNotificationPreferences,
     };
     await writeData('config.json', updatedConfig);
     toast({
@@ -145,6 +168,91 @@ export default function EmailSettings({ initialConfig }: EmailSettingsProps) {
               <Save className="mr-2 h-4 w-4" />
               Guardar Configuración de Email
             </Button>
+
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Notificaciones Globales (Valores por defecto)</h3>
+              <p className="text-sm text-muted-foreground">Activa o desactiva las notificaciones automáticas para todo el sistema.</p>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="defaultNotificationPreferences.notifyCauEmail"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Notificar CAU</FormLabel>
+                        <p className="text-[12px] text-muted-foreground">Emails de nuevas solicitudes y respuestas.</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="defaultNotificationPreferences.notifyQrAccessEmail"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><QrCode className="h-4 w-4" /> Notificar Pases QR</FormLabel>
+                        <p className="text-[12px] text-muted-foreground">Emails con el código de acceso al conductor.</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="defaultNotificationPreferences.notifyFleetUpdatesEmail"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><Truck className="h-4 w-4" /> Notificar Cambios de Flota</FormLabel>
+                        <p className="text-[12px] text-muted-foreground">Avisos de altas y bajas de vehículos.</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="defaultNotificationPreferences.notifyFleetMovementsEmail"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Notificar Movimientos</FormLabel>
+                        <p className="text-[12px] text-muted-foreground">Avisos de entradas y salidas de vehículos.</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="defaultNotificationPreferences.notifyCauReplyEmail"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Notificar Respuestas CAU</FormLabel>
+                        <p className="text-[12px] text-muted-foreground">Emails cuando un agente responde a un ticket.</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
           </form>
         </Form>
         <Separator className="my-6" />

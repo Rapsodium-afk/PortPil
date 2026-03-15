@@ -146,7 +146,7 @@ export default function SituationPage() {
     }
   };
   
-  const canAccess = user?.roles.includes('Admin') || user?.roles.includes('Gestor Situacion') || user?.roles.includes('Operador Situacion');
+  const canAccess = user?.roles.includes('Admin') || user?.roles.includes('Gestor Situación') || user?.roles.includes('Operador Situación');
   
   if (isAuthLoading || isPageLoading) {
     return <div>Cargando...</div>;

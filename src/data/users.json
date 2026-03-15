@@ -1,4 +1,3 @@
-
 [
   {
     "id": "1",
@@ -7,21 +6,27 @@
     "roles": [
       "Admin",
       "Media Manager",
-      "Gestor Situacion",
-      "Operador Situacion"
+      "Gestor Situación",
+      "Operador Situación"
     ],
     "password": "admin",
     "status": "active",
     "companyIds": [
       "transport-com"
-    ]
+    ],
+    "preferences": {
+      "notifyCauEmail": false,
+      "notifyQrAccessEmail": true,
+      "notifyFleetUpdatesEmail": true,
+      "notifyFleetMovementsEmail": true
+    }
   },
   {
     "id": "2",
     "name": "Agente de Soporte Aduanas",
     "email": "aduana@portpilot.test",
     "roles": [
-      "Soporte Aduanas"
+      "Soporte"
     ],
     "password": "aduana",
     "status": "active",
@@ -69,7 +74,7 @@
     "name": "Validador Operativo",
     "email": "operativo@portpilot.test",
     "roles": [
-      "Soporte Operativo"
+      "Soporte"
     ],
     "password": "password123",
     "status": "active",

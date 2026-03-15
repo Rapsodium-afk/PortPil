@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Eye, Filter, MoreHorizontal, Paperclip, Download, Send, CornerDownRight, MessageSquare, Archive, FolderSync } from 'lucide-react';
+import { Eye, Filter, MoreHorizontal, Paperclip, Download, Send, CornerDownRight, MessageSquare, Archive, FolderSync, Zap, AlertCircle, FileCheck } from 'lucide-react';
 import type { CauMessage, CauRequest, CauRequestStatus, CauCategory, CauRequestCategory, UserRole } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { sendCauReplyNotification } from '../cau-actions';
+import { uploadFile } from '@/lib/actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,12 +58,15 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
   useEffect(() => {
     setRequests(initialRequests);
   }, [initialRequests]);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const handleReply = () => {
     if (!selectedRequest || !user || replyContent.trim() === '') return;
 
     const newMessage: CauMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       author: user.name,
       authorRole: user.roles[0] as UserRole, // Use the primary role
       content: replyContent,
@@ -77,13 +83,18 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
     onUpdateRequests(updatedRequests);
     setSelectedRequest(updatedRequest);
     setReplyContent('');
+
+    // Send notification
+    if (user.roles[0] !== 'Usuario') {
+      sendCauReplyNotification(updatedRequest, replyContent, user.name);
+    }
   };
   
   const handleStatusChange = (newStatus: CauRequestStatus) => {
     if (!selectedRequest || !user) return;
 
     const statusChangeMessage: CauMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       author: 'Sistema',
       authorRole: 'Sistema',
       content: `Estado cambiado a "${newStatus}" por ${user.name}.`,
@@ -105,7 +116,7 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
     if (!selectedRequest || !user) return;
 
     const categoryChangeMessage: CauMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       author: 'Sistema',
       authorRole: 'Sistema',
       content: `Categoría cambiada a "${newCategory}" por ${user.name}.`,
@@ -134,6 +145,36 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
     setIsDialogOpen(true);
   }
 
+  const handleRequestClosure = () => {
+    if (!selectedRequest || !user) return;
+
+    const closureMessage: CauMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      author: user.name,
+      authorRole: user.roles[0] as UserRole,
+      content: "Solicito el cierre de esta incidencia. Gracias.",
+      createdAt: new Date().toISOString(),
+    };
+
+    const statusChangeMessage: CauMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      author: 'Sistema',
+      authorRole: 'Sistema',
+      content: `El usuario ${user.name} ha solicitado el cierre. Estado cambiado a "Cerrada".`,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedRequest: CauRequest = {
+      ...selectedRequest,
+      status: 'Cerrada',
+      history: [...selectedRequest.history, closureMessage, statusChangeMessage],
+    };
+
+    const updatedRequests = requests.map(r => r.id === updatedRequest.id ? updatedRequest : r);
+    onUpdateRequests(updatedRequests);
+    setSelectedRequest(updatedRequest);
+  };
+
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
@@ -145,25 +186,68 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
     }
   }
 
-  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Soporte Aduanas') || user?.roles.includes('Soporte Operativo');
-  
-  const displayedRequests = canManage ? requests.filter(r => r.status !== 'Archivada') : [];
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedRequest || !user) return;
 
-  if (!canManage) {
-    return (
-        <Card>
-            <CardContent className="p-8">
-                <Alert>
-                    <Lock className="h-4 w-4" />
-                    <AlertTitle>Acceso Restringido</AlertTitle>
-                    <AlertDescription>
-                        No tienes permisos para ver la bandeja de entrada de solicitudes.
-                    </AlertDescription>
-                </Alert>
-            </CardContent>
-        </Card>
-    );
-  }
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Data = (event.target?.result as string).split(',')[1];
+        const res = await uploadFile(base64Data, `${Date.now()}-${file.name}`, 'documents');
+        
+        const newAttachment = {
+          name: file.name,
+          url: res.url
+        };
+
+        const uploadMessage: CauMessage = {
+          id: `msg-${Date.now()}`,
+          author: user.name,
+          authorRole: user.roles[0] as UserRole,
+          content: `Archivo adjuntado: ${file.name}`,
+          createdAt: new Date().toISOString(),
+        };
+
+        const updatedRequest: CauRequest = {
+          ...selectedRequest,
+          attachments: [...(selectedRequest.attachments || []), newAttachment],
+          history: [...selectedRequest.history, uploadMessage],
+          status: 'Pendiente' // Return to Pending after providing documentation
+        };
+
+        const updatedRequests = requests.map(r => r.id === updatedRequest.id ? updatedRequest : r);
+        onUpdateRequests(updatedRequests);
+        setSelectedRequest(updatedRequest);
+        toast({
+          title: "Archivo subido",
+          description: `Se ha adjuntado "${file.name}" correctamente.`,
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        title: "Error al subir",
+        description: "No se pudo subir el archivo. Inténtelo de nuevo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Soporte');
+  
+  const displayedRequests = requests.filter(r => {
+    if (r.status === 'Archivada' && !canManage) return false;
+    if (canManage) return r.status !== 'Archivada';
+    return r.userId === user?.id && r.status !== 'Archivada';
+  });
+
+  const { toast } = useToast();
   
   const getStatusVariant = (status: CauRequestStatus): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
@@ -180,6 +264,10 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
         return 'destructive'; // Red
       case 'Archivada':
         return 'outline';
+      case 'Cerrada':
+        return 'outline';
+      case 'Caducada':
+        return 'destructive';
       default:
         return 'outline';
     }
@@ -192,7 +280,7 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
     return name.substring(0, 2);
   }
   
-  const allStatuses: CauRequestStatus[] = ['Pendiente', 'En curso', 'Pendiente documentación', 'Respondido', 'Aprobado', 'No autorizado', 'Denegado', 'Archivada'];
+  const allStatuses: CauRequestStatus[] = ['Pendiente', 'En curso', 'Pendiente documentación', 'Respondido', 'Aprobado', 'No autorizado', 'Denegado', 'Archivada', 'Cerrada', 'Caducada'];
   
     const getSlaInfo = (slaExpiresAt: string | undefined) => {
     if (!slaExpiresAt) return { text: 'N/A', color: 'text-muted-foreground' };
@@ -219,9 +307,12 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Bandeja de Entrada de Solicitudes</CardTitle>
+            <CardTitle>{canManage ? "Bandeja de Entrada de Solicitudes" : "Mis Solicitudes"}</CardTitle>
             <CardDescription>
-              {`Mostrando ${displayedRequests.length} de ${requests.filter(r => r.status !== 'Archivada').length} solicitudes activas.`}
+              {canManage 
+                ? `Mostrando ${displayedRequests.length} de ${requests.filter(r => r.status !== 'Archivada').length} solicitudes activas.`
+                : `Tienes ${displayedRequests.length} solicitudes en seguimiento.`
+              }
             </CardDescription>
           </div>
           <Button variant="outline" size="sm">
@@ -274,12 +365,15 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col" aria-describedby="request-dialog-description">
           {selectedRequest && (
             <>
               <DialogHeader>
                 <DialogTitle>{selectedRequest.subject}</DialogTitle>
-                <div className="text-sm text-muted-foreground">
+                <DialogDescription id="request-dialog-description">
+                  Detalles y seguimiento de la solicitud abierta por {selectedRequest.userName}.
+                </DialogDescription>
+                <div className="text-sm text-muted-foreground mt-2">
                   <span>De: {selectedRequest.userName} | Creado: {format(new Date(selectedRequest.createdAt), 'dd MMMM yyyy, HH:mm', { locale: es })}</span>
                   <Badge variant="outline" className="ml-2">{selectedRequest.category}</Badge>
                 </div>
@@ -294,7 +388,7 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
                         <AvatarImage />
                         <AvatarFallback className={
                             msg.authorRole === 'Sistema' ? 'bg-slate-300' :
-                            ['Admin', 'Soporte Aduanas', 'Soporte Operativo'].includes(msg.authorRole) ? 'bg-amber-200' : 'bg-sky-200'
+                            ['Admin', 'Soporte'].includes(msg.authorRole) ? 'bg-amber-200' : 'bg-sky-200'
                         }>
                           {getInitials(msg.author)}
                         </AvatarFallback>
@@ -385,15 +479,71 @@ export default function InboxTable({ initialRequests, onUpdateRequests, categori
                       </div>
                     )}
                     <div className="flex-1">
-                        <label className="text-sm font-medium">Añadir Respuesta</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="text-sm font-medium">Añadir Respuesta</label>
+                            {canManage && (
+                                <Button 
+                                    variant="link" 
+                                    size="sm" 
+                                    className="h-auto p-0 text-xs"
+                                    onClick={() => setReplyContent(prev => prev + (prev ? '\n\n' : '') + "Dispone de 72 horas para contestar o se dará por caducada la solicitud.")}
+                                >
+                                    <Zap className="h-3 w-3 mr-1" /> Añadir Aviso 72h
+                                </Button>
+                            )}
+                        </div>
+                        {canManage && !replyContent.includes('72 horas') && (
+                            <Alert className="mb-2 py-2">
+                                <AlertCircle className="h-3 w-3" />
+                                <AlertDescription className="text-xs">
+                                    Recuerde incluir el aviso de cierre por inactividad de 72h.
+                                </AlertDescription>
+                            </Alert>
+                        )}
                         <Textarea 
                             placeholder="Escribe tu respuesta aquí..."
                             value={replyContent}
                             onChange={(e) => setReplyContent(e.target.value)}
                         />
                     </div>
-                </div>
-                 <div className="flex justify-end">
+                  {selectedRequest.status === 'Pendiente documentación' && (
+                    <div className="mt-4 p-4 border-2 border-dashed rounded-lg bg-muted/30 flex flex-col items-center justify-center text-center">
+                      <Paperclip className="h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-sm font-medium">Adjuntar Documentación Solicitada</p>
+                      <p className="text-xs text-muted-foreground">Haz clic para seleccionar o arrastra tus archivos aquí.</p>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-4" 
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? "Subiendo..." : "Seleccionar Archivo"}
+                      </Button>
+                    </div>
+                  )}
+                 </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                        {canManage && (
+                            <Button variant="secondary" onClick={() => handleStatusChange('Cerrada')}>
+                                <FileCheck className="mr-2 h-4 w-4" />
+                                Finalizar Solicitud
+                            </Button>
+                        )}
+                        {!canManage && selectedRequest.status !== 'Cerrada' && (
+                            <Button variant="outline" onClick={handleRequestClosure}>
+                                <FileCheck className="mr-2 h-4 w-4" />
+                                Solicitar Cierre
+                            </Button>
+                        )}
+                    </div>
                     <Button onClick={handleReply} disabled={!replyContent.trim()}>
                         <Send className="mr-2 h-4 w-4"/>
                         Enviar Respuesta

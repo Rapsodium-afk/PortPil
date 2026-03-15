@@ -101,7 +101,7 @@ export default async function Home() {
         <section className="container mx-auto px-4 py-8 md:py-12">
             <div className="grid gap-12 lg:grid-cols-4">
                 <div className="lg:col-span-3">
-                    <NewsFeed initialNews={initialNews} onNewsChange={handleNewsChange} />
+                    <NewsFeed initialNews={initialNews} onNewsChange={handleNewsChange} allowAdd={false} />
                 </div>
                 <aside className="lg:col-span-1 space-y-8">
                      <Card>

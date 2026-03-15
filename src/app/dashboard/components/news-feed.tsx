@@ -3,31 +3,50 @@
 import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { PlusCircle, Send, Image as ImageIcon } from 'lucide-react';
+import { PlusCircle, Send, Image as ImageIcon, Upload, Trash2, Pencil } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { NewsPost } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { uploadFile } from '@/lib/actions';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewsFeedProps {
   initialNews: NewsPost[];
   onNewsChange: (news: NewsPost[]) => void;
+  allowAdd?: boolean;
 }
 
-export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
+export default function NewsFeed({ initialNews, onNewsChange, allowAdd = true }: NewsFeedProps) {
   const { user, isAdmin, isMediaManager } = useAuth();
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostAuthor, setNewPostAuthor] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<NewsPost | null>(null);
   const [news, setNews] = useState(initialNews);
+  const [isUploading, setIsUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setMounted(true);
@@ -43,15 +62,44 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
     setNews(initialNews);
   }, [initialNews]);
 
-  const handleAddPost = () => {
+  const handleAddPost = async () => {
     if (newPostTitle.trim() && newPostContent.trim() && user) {
+      let finalImageUrl = imageUrl;
+      
+      if (imageFile) {
+        setIsUploading(true);
+        try {
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve) => {
+            reader.onload = () => {
+              const base64 = reader.result as string;
+              resolve(base64.split(',')[1]);
+            };
+          });
+          reader.readAsDataURL(imageFile);
+          const base64 = await base64Promise;
+          
+          const uploadResult = await uploadFile(base64, `${Date.now()}-${imageFile.name}`, 'images');
+          finalImageUrl = uploadResult.url;
+        } catch (error) {
+          toast({
+            title: "Error al subir imagen",
+            description: "No se pudo guardar la imagen en el servidor.",
+            variant: "destructive"
+          });
+          setIsUploading(false);
+          return;
+        }
+        setIsUploading(false);
+      }
+
       const newPost: NewsPost = {
         id: `news-${Date.now()}`,
         title: newPostTitle,
         content: newPostContent,
         author: newPostAuthor || user.name,
         createdAt: new Date().toISOString(),
-        imageUrl: imageUrl || undefined,
+        imageUrl: finalImageUrl || undefined,
       };
       const updatedNews = [newPost, ...news];
       onNewsChange(updatedNews);
@@ -59,8 +107,38 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
       setNewPostContent('');
       setNewPostAuthor(user.name);
       setImageUrl('');
+      setImageFile(null);
       setIsDialogOpen(false);
     }
+  };
+
+  const handleDeletePost = (id: string) => {
+    const updatedNews = news.filter(post => post.id !== id);
+    onNewsChange(updatedNews);
+    toast({
+      title: "Noticia eliminada",
+      description: "La noticia ha sido eliminada correctamente.",
+    });
+  };
+
+  const handleEditPost = () => {
+    if (editingPost && editingPost.title.trim() && editingPost.content.trim()) {
+      const updatedNews = news.map(post => 
+        post.id === editingPost.id ? { ...editingPost } : post
+      );
+      onNewsChange(updatedNews);
+      setIsEditDialogOpen(false);
+      setEditingPost(null);
+      toast({
+        title: "Noticia actualizada",
+        description: "La noticia se ha modificado correctamente.",
+      });
+    }
+  };
+
+  const openEditDialog = (post: NewsPost) => {
+    setEditingPost({ ...post });
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -70,7 +148,7 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
             <CardTitle>Noticias Operativas</CardTitle>
             <CardDescription>Últimas actualizaciones y avisos de la terminal.</CardDescription>
         </div>
-        {mounted && user && (isAdmin || isMediaManager) && (
+        {mounted && user && (isAdmin || isMediaManager) && allowAdd && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -112,23 +190,41 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="imageUrl">URL de la Imagen (Opcional)</Label>
-                    <div className='relative'>
-                        <ImageIcon className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                        <Input
-                            id="imageUrl"
-                            placeholder="https://ejemplo.com/imagen.jpg"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                            className="pl-8"
-                        />
+                    <Label htmlFor="image">Imagen de la Noticia (Opcional)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                        className="cursor-pointer"
+                      />
+                      {imageFile && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setImageFile(null)}
+                          className="text-destructive"
+                        >
+                          <PlusCircle className="h-4 w-4 rotate-45" />
+                        </Button>
+                      )}
                     </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      La imagen se guardará localmente en el servidor según la ruta configurada en Ajustes.
+                    </p>
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddPost} className="w-full">
-                  <Send className="mr-2 h-4 w-4" />
-                  Publicar
+                <Button onClick={handleAddPost} className="w-full" disabled={isUploading}>
+                  {isUploading ? (
+                    <>Subiendo...</>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Publicar
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -145,7 +241,42 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
                 </div>
               )}
               <div className="flex-1 w-full">
-                <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-semibold text-lg">{post.title || 'Actualización Operativa'}</h3>
+                  {mounted && user && (isAdmin || isMediaManager) && allowAdd && (
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => openEditDialog(post)}
+                        className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Se eliminará permanentemente la noticia "{post.title}".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeletePost(post.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-foreground/90">{post.content}</p>
                 <div className="text-xs text-muted-foreground mt-2">
                   <span>Por {post.author}</span>
@@ -162,6 +293,47 @@ export default function NewsFeed({ initialNews, onNewsChange }: NewsFeedProps) {
           ))}
         </div>
       </CardContent>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Noticia Operativa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <Label htmlFor="edit-title">Título de la Noticia</Label>
+                <Input
+                  id="edit-title"
+                  value={editingPost?.title || ''}
+                  onChange={(e) => setEditingPost(prev => prev ? { ...prev, title: e.target.value } : null)}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="edit-content">Contenido</Label>
+                <Textarea
+                  id="edit-content"
+                  value={editingPost?.content || ''}
+                  onChange={(e) => setEditingPost(prev => prev ? { ...prev, content: e.target.value } : null)}
+                  rows={4}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="edit-author">Autor / Propietario</Label>
+                <Input
+                  id="edit-author"
+                  value={editingPost?.author || ''}
+                  onChange={(e) => setEditingPost(prev => prev ? { ...prev, author: e.target.value } : null)}
+                />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditPost} className="w-full">
+              <Send className="mr-2 h-4 w-4" />
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

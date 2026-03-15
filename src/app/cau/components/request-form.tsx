@@ -43,7 +43,7 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
   const [isUtiValid, setIsUtiValid] = useState(false);
   const [utiDetails, setUtiDetails] = useState<UtiDetails | null>(null);
 
-  const canCreateOnBehalf = user?.roles.includes('Admin') || user?.roles.includes('Soporte Aduanas') || user?.roles.includes('Soporte Operativo');
+  const canCreateOnBehalf = user?.roles.includes('Admin') || user?.roles.includes('Soporte');
 
   const dynamicSchema = useMemo(() => {
     if (!selectedRequestType) return baseSchema;
@@ -182,10 +182,11 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
     }
 
     const newRequest: CauRequest = {
-        id: `cau-${Date.now()}`,
+        id: `cau-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         subject: selectedRequestType.title,
         userId: targetUser.id,
         userName: targetUser.name,
+        companyId: targetUser.companyIds[0] || '', // Use the first company ID
         createdAt: now.toISOString(),
         status: 'Pendiente',
         category: selectedRequestType.category,
@@ -194,7 +195,7 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
         attachments: allAttachments,
         customFieldsData: customFieldsData,
         history: [{
-            id: `msg-${Date.now()}`,
+            id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             author: user.name,
             authorRole: user.roles[0] as UserRole, // Use primary role
             content: initialMessage,

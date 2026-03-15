@@ -8,6 +8,7 @@ import { RequestForm } from './components/request-form';
 import { RequestLog } from './components/request-log';
 import { QrPrintDialog } from './components/qr-print-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { createAccessRequest } from './access-actions';
 
 export default function AccessRequestsPage() {
   const { user, activeCompany, isAdmin, isSoporteOperativo, isSoporteAduanas } = useAuth();
@@ -84,7 +85,7 @@ export default function AccessRequestsPage() {
 
     try {
       const updatedRequests = [newRequest, ...requests];
-      await writeData('access-requests.json', updatedRequests);
+      await createAccessRequest(newRequest);
       setRequests(updatedRequests);
       setSelectedRequest(newRequest);
       setIsQrDialogOpen(true);

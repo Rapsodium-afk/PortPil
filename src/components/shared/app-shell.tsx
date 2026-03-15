@@ -2,11 +2,11 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  Anchor, Bell, ChevronDown, LayoutDashboard, LogOut, MessageSquare, PanelLeft, Settings, 
+import {
+  Anchor, Bell, ChevronDown, LayoutDashboard, LogOut, MessageSquare, PanelLeft, Settings,
   Ship, Users, FlaskConical, FolderKanban, Truck, Building2, User as UserIcon,
   ShieldCheck, HardHat, Landmark, Megaphone, UserCheck, ClipboardList, ClipboardCheck,
-  UserPlus, QrCode
+  UserPlus, QrCode, KeySquare, Tags, FileText, BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { AdminImpersonationTool } from './admin-impersonation-tool';
@@ -44,14 +44,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const navItems = useMemo(() => {
     const allItems = [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situacion', 'Operador Situacion'] as UserRole[] },
-      { href: '/cau', label: 'CAU', icon: MessageSquare, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
-      { href: '/access-requests', label: 'Acceso Conductores', icon: UserPlus, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Agente de Aduanas'] as UserRole[] },
-      { href: '/expediente', label: 'Mi Expediente', icon: FolderKanban, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[]},
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Soporte', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situación', 'Operador Situación'] as UserRole[] },
+      { href: '/cau', label: 'CAU', icon: MessageSquare, roles: ['Admin', 'Soporte', 'Soporte', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
+      { href: '/access-requests', label: 'Acceso Conductores', icon: UserPlus, roles: ['Admin', 'Soporte', 'Soporte', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Agente de Aduanas'] as UserRole[] },
+      { href: '/expediente', label: 'Mi Expediente', icon: FolderKanban, roles: ['Admin', 'Soporte', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[]},
       { href: '/flota', label: 'Gestor de Flotas', icon: Truck, roles: ['Operador Logístico', 'Admin'] as UserRole[] },
-      { href: '/situacion', label: 'Actualizar Plazas', icon: ClipboardList, roles: ['Admin', 'Gestor Situacion', 'Operador Situacion'] as UserRole[] },
-      { href: '/admin/companies', label: 'Gestión Empresas', icon: Building2, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas'] as UserRole[] },
-      { href: '/admin/users', label: 'Gestión Usuarios', icon: Users, roles: ['Admin', 'Soporte Operativo', 'Soporte Aduanas'] as UserRole[] },
+      { href: '/situacion', label: 'Actualizar Plazas', icon: ClipboardList, roles: ['Admin', 'Gestor Situación', 'Operador Situación'] as UserRole[] },
+      { href: '/admin/companies', label: 'Gestión Empresas', icon: Building2, roles: ['Admin', 'Soporte'] as UserRole[] },
+      { href: '/admin/users', label: 'Gestión Usuarios', icon: Users, roles: ['Admin', 'Soporte'] as UserRole[] },
+      { href: '/admin/roles', label: 'Gestión Roles', icon: KeySquare, roles: ['Admin'] as UserRole[] },
+      { href: '/admin/content', label: 'Gestor de Contenido', icon: Megaphone, roles: ['Admin', 'Media Manager'] as UserRole[] },
+      { href: '/comunicados', label: 'Comunicados', icon: FileText, roles: ['Admin', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
+      { href: '/admin/cau-config', label: 'Configuración CAU', icon: Tags, roles: ['Admin', 'Soporte'] as UserRole[] },
+      { href: '/admin/performance', label: 'Rendimiento de Agentes', icon: BarChart3, roles: ['Admin'] as UserRole[] },
       { href: '/admin/settings', label: 'Ajustes', icon: Settings, roles: ['Admin'] as UserRole[] },
       { href: '/admin/api-test', label: 'Prueba de API', icon: FlaskConical, roles: ['Admin'] as UserRole[] },
     ];
@@ -70,9 +75,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     switch (role) {
       case 'Admin':
         return <ShieldCheck className="h-5 w-5" />;
-      case 'Soporte Operativo':
+      case 'Soporte':
         return <HardHat className="h-5 w-5" />;
-      case 'Soporte Aduanas':
+      case 'Soporte':
         return <Landmark className="h-5 w-5" />;
       case 'Media Manager':
         return <Megaphone className="h-5 w-5" />;
@@ -82,9 +87,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         return <Ship className="h-5 w-5" />;
       case 'Agente de Aduanas':
         return <UserCheck className="h-5 w-5" />;
-      case 'Gestor Situacion':
+      case 'Gestor Situación':
         return <ClipboardCheck className="h-5 w-5" />;
-      case 'Operador Situacion':
+      case 'Operador Situación':
           return <ClipboardList className="h-5 w-5" />;
       default:
         return <UserIcon className="h-5 w-5" />;
@@ -199,9 +204,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/admin/settings')}>
-                    <Settings className="mr-2 h-4 w-4"/>
-                    <span>Ajustes</span>
+                <DropdownMenuItem onClick={() => router.push('/settings')}>
+                    <UserIcon className="mr-2 h-4 w-4"/>
+                    <span>Mis Ajustes</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>

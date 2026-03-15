@@ -131,3 +131,62 @@ export async function syncDataFromJsonToDbAction(module: string) {
     
     return { success: true };
 }
+
+export async function readCss(): Promise<string> {
+    const cssPath = path.join(process.cwd(), 'src', 'app', 'globals.css');
+    try {
+        return await fs.readFile(cssPath, 'utf-8');
+    } catch (error) {
+        console.error('Error reading globals.css:', error);
+        throw new Error('Could not read globals.css');
+    }
+}
+
+export async function writeCss(content: string): Promise<void> {
+    const cssPath = path.join(process.cwd(), 'src', 'app', 'globals.css');
+    try {
+        await fs.writeFile(cssPath, content, 'utf-8');
+        revalidatePath('/', 'layout');
+    } catch (error) {
+        console.error('Error writing globals.css:', error);
+        throw new Error('Could not write globals.css');
+    }
+}
+
+export async function uploadFile(base64Data: string, fileName: string, type: 'images' | 'documents' | 'backups'): Promise<{url: string, path: string}> {
+    const config = await readConfigOnly();
+    // Default to a folder in public if not configured
+    const defaultPaths = {
+        images: path.join(process.cwd(), 'public', 'uploads', 'images'),
+        documents: path.join(process.cwd(), 'public', 'uploads', 'documents'),
+        backups: path.join(process.cwd(), 'public', 'uploads', 'backups')
+    };
+
+    const targetDir = config.storagePaths?.[type] || defaultPaths[type];
+    
+    try {
+        await fs.mkdir(targetDir, { recursive: true });
+    } catch (err) {
+        // Directory exists or other error
+    }
+
+    const filePath = path.join(targetDir, fileName);
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    await fs.writeFile(filePath, buffer);
+    
+    // We return a URL that we'll handle with a dynamic route to serve these files
+    // regardless of where they are stored on the server/NAS.
+    return {
+        url: `/api/files?type=${type}&name=${encodeURIComponent(fileName)}`,
+        path: filePath
+    };
+}
+
+export async function deleteFile(filePath: string): Promise<void> {
+    try {
+        await fs.unlink(filePath);
+    } catch (error) {
+        console.error('Error deleting file:', error);
+    }
+}

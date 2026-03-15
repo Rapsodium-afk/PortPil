@@ -1,12 +1,183 @@
 [
   {
+    "id": "cau-1773567142729",
+    "subject": "Solicitud de visita a Ignacio",
+    "userId": "3",
+    "userName": "Transportista Juan",
+    "createdAt": "2026-03-15T09:32:22.729Z",
+    "status": "Cerrada",
+    "category": "Operativas",
+    "type": "Solicitud de visita a Ignacio",
+    "uti": "",
+    "attachments": [],
+    "customFieldsData": {
+      "field-1765659142108": "Juan",
+      "field-1765659151482": "Si",
+      "field-1765659166193": "Claro"
+    },
+    "history": [
+      {
+        "id": "msg-1773567142729",
+        "author": "Transportista Juan",
+        "authorRole": "Transitario",
+        "content": "Prueba de cierre de solicitud por parte del usuario.",
+        "createdAt": "2026-03-15T09:32:22.729Z"
+      },
+      {
+        "id": "msg-1773568840984",
+        "author": "Transportista Juan",
+        "authorRole": "Transitario",
+        "content": "Esta es una respuesta de prueba.",
+        "createdAt": "2026-03-15T10:00:40.984Z"
+      },
+      {
+        "id": "msg-1773569613457-berwcgaba",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Cerrada\" por Admin.",
+        "createdAt": "2026-03-15T10:13:33.457Z"
+      }
+    ]
+  },
+  {
+    "id": "cau-1773565408745",
+    "subject": "Visita a Instalaciones",
+    "userId": "3",
+    "userName": "Transportista Juan",
+    "createdAt": "2026-03-15T09:03:28.745Z",
+    "status": "Cerrada",
+    "category": "Dirección",
+    "type": "Visita a Instalaciones",
+    "uti": "",
+    "attachments": [],
+    "customFieldsData": {
+      "field-1773513711983": "Visita GUIADA",
+      "field-1773513726611": "14/02/2027",
+      "field-1773513741475": "qUEREMOS QUE NOS ENSEÑEN LA TERMINAL"
+    },
+    "history": [
+      {
+        "id": "msg-1773565408745",
+        "author": "Transportista Juan",
+        "authorRole": "Transitario",
+        "content": "vISITAREMOS LA TERMINAL LA EMPRESA PAQUITO SL",
+        "createdAt": "2026-03-15T09:03:28.745Z"
+      },
+      {
+        "id": "msg-1773565428223",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Denegado\" por Admin.",
+        "createdAt": "2026-03-15T09:03:48.223Z"
+      },
+      {
+        "id": "msg-1773565442849",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "no disponible fecha para visita.",
+        "createdAt": "2026-03-15T09:04:02.849Z"
+      },
+      {
+        "id": "msg-1773565450029",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Cerrada\" por Admin.",
+        "createdAt": "2026-03-15T09:04:10.029Z"
+      },
+      {
+        "id": "msg-1773567016086",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "Dispone de 72 horas para contestar o se dará por caducada la solicitud.",
+        "createdAt": "2026-03-15T09:30:16.086Z"
+      },
+      {
+        "id": "msg-1773567022376",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Cerrada\" por Admin.",
+        "createdAt": "2026-03-15T09:30:22.376Z"
+      }
+    ],
+    "slaExpiresAt": "2026-04-14T09:03:28.745Z"
+  },
+  {
+    "id": "cau-1773526736750",
+    "subject": "Visita a Instalaciones",
+    "userId": "4",
+    "userName": "Lucía Gómez",
+    "createdAt": "2026-03-14T22:18:56.750Z",
+    "status": "Cerrada",
+    "category": "Dirección",
+    "type": "Visita a Instalaciones",
+    "uti": "",
+    "attachments": [],
+    "customFieldsData": {
+      "field-1773513711983": "visita a fito",
+      "field-1773513726611": "12/12/2026",
+      "field-1773513741475": "visita para validar operativas"
+    },
+    "history": [
+      {
+        "id": "msg-1773526736750",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "es una visita de rigor estructural",
+        "createdAt": "2026-03-14T22:18:56.750Z"
+      },
+      {
+        "id": "msg-1773561041530",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Denegado\" por Admin.",
+        "createdAt": "2026-03-15T07:50:41.530Z"
+      },
+      {
+        "id": "msg-1773561050817",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "fecha no disponible",
+        "createdAt": "2026-03-15T07:50:50.817Z"
+      },
+      {
+        "id": "msg-1773561078084",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Denegado\" por Admin.",
+        "createdAt": "2026-03-15T07:51:18.084Z"
+      },
+      {
+        "id": "msg-1773568886541",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Pendiente documentación\" por Agente de Soporte Aduanas.",
+        "createdAt": "2026-03-15T10:01:26.541Z"
+      },
+      {
+        "id": "msg-1773569078171-usr",
+        "author": "Lucía Gómez",
+        "authorRole": "Operador Logístico",
+        "content": "Solicito el cierre de esta incidencia. Gracias.",
+        "createdAt": "2026-03-15T10:04:38.171Z"
+      },
+      {
+        "id": "msg-1773569078171-usr-system",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "El usuario Lucía Gómez ha solicitado el cierre. Estado cambiado a \"Cerrada\".",
+        "createdAt": "2026-03-15T10:04:38.171Z"
+      }
+    ],
+    "slaExpiresAt": "2026-04-13T22:18:56.750Z"
+  },
+  {
     "id": "cau-1773513870014",
     "subject": "Visita a Instalaciones",
     "userId": "4",
     "userName": "Lucía Gómez",
     "createdAt": "2026-03-14T18:44:30.014Z",
-    "status": "Pendiente",
-    "category": "Direccion",
+    "status": "Cerrada",
+    "category": "Dirección",
     "type": "Visita a Instalaciones",
     "uti": "",
     "attachments": [],
@@ -22,6 +193,20 @@
         "authorRole": "Admin",
         "content": "asdadasdoioioioio",
         "createdAt": "2026-03-14T18:44:30.014Z"
+      },
+      {
+        "id": "msg-1773569043127",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Pendiente documentación\" por Admin.",
+        "createdAt": "2026-03-15T10:04:03.127Z"
+      },
+      {
+        "id": "msg-1773569831830-hywu86vwg",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Cerrada\" por Admin.",
+        "createdAt": "2026-03-15T10:17:11.830Z"
       }
     ],
     "slaExpiresAt": "2026-04-13T18:44:30.014Z"
@@ -32,7 +217,7 @@
     "userId": "4",
     "userName": "Lucía Gómez",
     "createdAt": "2025-12-13T22:37:36.919Z",
-    "status": "Respondido",
+    "status": "Cerrada",
     "category": "Operativas",
     "type": "Solicitud de Alta de vehículo no UTI en la terminal",
     "uti": "R0067BCN",
@@ -66,19 +251,26 @@
         "authorRole": "Admin",
         "content": "nO AUTORIZADO PORQUE ESTA CADUCADO",
         "createdAt": "2026-03-13T12:34:22.732Z"
+      },
+      {
+        "id": "msg-1773569870438-42frri0hv",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Cerrada\" por Admin.",
+        "createdAt": "2026-03-15T10:17:50.438Z"
       }
     ],
     "slaExpiresAt": "2025-12-14T22:37:36.919Z"
   },
   {
     "id": "cau-1765659285172",
-    "subject": "Solicitu de visita a Ignacio",
+    "subject": "Solicitud de visita a Ignacio",
     "userId": "4",
     "userName": "Lucía Gómez",
     "createdAt": "2025-12-13T20:54:45.172Z",
     "status": "Archivada",
     "category": "Operativas",
-    "type": "Solicitu de visita a Ignacio",
+    "type": "Solicitud de visita a Ignacio",
     "uti": "",
     "attachments": [],
     "customFieldsData": {
@@ -123,7 +315,7 @@
     "userId": "3",
     "userName": "Transportista Juan",
     "createdAt": "2024-07-30T10:00:00.000Z",
-    "status": "Pendiente documentación",
+    "status": "Caducada",
     "category": "Aduaneras",
     "type": "Solicitud de desbloqueo por otros motivos",
     "attachments": [
@@ -143,9 +335,16 @@
       {
         "id": "msg-2",
         "author": "Agente de Soporte Aduanas",
-        "authorRole": "Soporte Aduanas",
+        "authorRole": "Soporte",
         "content": "Recibido. Por favor, adjunte también la factura comercial para poder contrastar la información.",
         "createdAt": "2024-07-30T11:00:00.000Z"
+      },
+      {
+        "id": "msg-system-1773562537012",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "La solicitud ha sido cerrada automáticamente por falta de actividad del usuario en las últimas 72 horas.",
+        "createdAt": "2026-03-15T08:15:37.012Z"
       }
     ]
   },
@@ -183,7 +382,7 @@
     "userId": "5",
     "userName": "Carlos Fernández",
     "createdAt": "2024-07-30T14:00:00.000Z",
-    "status": "En curso",
+    "status": "Pendiente documentación",
     "category": "Operativas",
     "type": "Solicitud de reparación de camión en la terminal",
     "uti": "EF-5678-GH",
@@ -204,6 +403,13 @@
         "authorRole": "Usuario",
         "content": "Mi conductor no puede acceder a la zona de importación. Su ID es 789123. Adjunto la autorización.",
         "createdAt": "2024-07-30T14:00:00.000Z"
+      },
+      {
+        "id": "msg-1773562907690",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Pendiente documentación\" por Admin.",
+        "createdAt": "2026-03-15T08:21:47.690Z"
       }
     ]
   }

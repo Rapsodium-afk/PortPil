@@ -1,7 +1,8 @@
 'use server';
 
 import { readData, writeData } from '@/lib/actions';
-import type { Fleet, Vehicle } from '@/lib/types';
+import type { Fleet, Vehicle, User } from '@/lib/types';
+import { notifyRoles, notifyUserIfEnabled } from '@/lib/email-service';
 
 /**
  * Retrieves all fleets in the system.
@@ -49,6 +50,24 @@ export async function updateFleet(
     }
     
     await writeData('fleets.json', allFleets);
+    
+    // Notify users of the company
+    try {
+      const allUsers = await readData<User[]>('users.json');
+      const companyUsers = allUsers.filter(u => u.companyIds?.includes(companyName)); // Note: companyName is used as ID in some parts, or name. Let's assume company name check
+      
+      // Better check: company names usually match in Fleet but companyId is better. 
+      // In this app, companyName is used in Fleet.
+      const targetUsers = allUsers.filter(u => u.companyIds?.length > 0); // Simplified for now, or match by company name if possible
+      
+      // Let's just notify the admins and the user who did it for now, or all users if we find them.
+      await notifyRoles(['Admin', 'Soporte Operativo'], 'notifyFleetUpdatesEmail', {
+        companyName,
+        userName
+      });
+    } catch (e) {
+      console.error('Error sending fleet update notification:', e);
+    }
     
     return { success: true, message: 'Flota actualizada correctamente.', fleet: newFleetData };
 

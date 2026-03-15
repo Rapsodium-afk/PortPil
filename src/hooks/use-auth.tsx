@@ -17,10 +17,16 @@ interface AuthContextType {
   activeCompany: Company | null;
   setActiveCompany: (company: Company | null) => void;
   isAdmin: boolean;
+  isSoporte: boolean;
+  isSoporteOperativo: boolean;
+  isSoporteAduanas: boolean;
   isMediaManager: boolean;
+  isOperadorLogistico: boolean;
+  isSituación: boolean;
+  isAduana: boolean;
   config: SystemConfig | null;
-  impersonation: { role: string | null; companyId: string | null };
-  setImpersonation: (role: string | null, companyId: string | null) => void;
+  impersonation: { role: string | null; companyId: string | null; userId: string | null };
+  setImpersonation: (role: string | null, companyId: string | null, userId?: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -31,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
-  const [impersonation, setImpersonationState] = useState<{ role: string | null; companyId: string | null }>({ role: null, companyId: null });
+  const [impersonation, setImpersonationState] = useState<{ role: string | null; companyId: string | null; userId: string | null }>({ role: null, companyId: null, userId: null });
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<SystemConfig | null>(null);
 
@@ -140,11 +146,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await writeData('users.json', newUsers);
   }
 
-  const setImpersonation = (role: string | null, companyId: string | null) => {
+  const setImpersonation = async (role: string | null, companyId: string | null, userId: string | null = null) => {
     if (!appUser?.roles.includes('Admin')) return;
-    setImpersonationState({ role, companyId });
-    if (companyId) {
-      const company = userCompanies.find(c => c.id === companyId);
+    
+    setImpersonationState({ role, companyId, userId });
+    
+    if (userId) {
+      const targetUser = users.find(u => u.id === userId);
+      if (targetUser) {
+        await loadUserContext(targetUser);
+      }
+    } else if (companyId) {
+      const allCompanies = await readData<Company[]>('companies.json');
+      const company = allCompanies.find(c => c.id === companyId);
       if (company) setActiveCompanyState(company);
     } else {
       loadUserContext(appUser);
@@ -167,7 +181,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         activeCompany,
         setActiveCompany,
         isAdmin,
+        isSoporte: !!appUser?.roles?.includes('Soporte'),
+        isSoporteOperativo: !!appUser?.roles?.includes('Soporte Operativo'),
+        isSoporteAduanas: !!appUser?.roles?.includes('Soporte Aduanas'),
         isMediaManager,
+        isOperadorLogistico: !!appUser?.roles?.includes('Operador Logístico'),
+        isSituación: !!appUser?.roles?.includes('Gestor Situación') || !!appUser?.roles?.includes('Operador Situación'),
+        isAduana: !!appUser?.roles?.includes('Aduana') || !!appUser?.roles?.includes('Agente de Aduanas'),
         config,
         impersonation,
         setImpersonation
@@ -183,27 +203,34 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   
-  const { user, impersonation } = context;
+  const { user, impersonation, users } = context;
+
+  // Derive target user based on impersonation
+  const impersonatedUser = impersonation.userId ? users.find(u => u.id === impersonation.userId) : null;
+  const effectiveUser = impersonatedUser || user;
 
   // Derive roles and flags based on impersonation
-  const roles = impersonation.role ? [impersonation.role] : (user?.roles || []);
+  const roles = impersonation.role ? [impersonation.role] : (effectiveUser?.roles || []);
   const isAdmin = roles.includes('Admin');
+  const isSoporte = roles.includes('Soporte');
   const isSoporteOperativo = roles.includes('Soporte Operativo');
   const isSoporteAduanas = roles.includes('Soporte Aduanas');
   const isMediaManager = roles.includes('Media Manager');
   const isOperadorLogistico = roles.includes('Operador Logístico');
-  const isSituacion = roles.includes('Gestor Situacion') || roles.includes('Operador Situacion');
-  const isAduana = roles.includes('Aduana');
+  const isSituación = roles.includes('Gestor Situación') || roles.includes('Operador Situación');
+  const isAduana = roles.includes('Aduana') || isSoporteAduanas;
 
   return {
     ...context,
+    user: effectiveUser, // Use the effective user (impersonated or real)
     roles,
     isAdmin,
+    isSoporte,
     isSoporteOperativo,
     isSoporteAduanas,
     isMediaManager,
     isOperadorLogistico,
-    isSituacion,
+    isSituación,
     isAduana,
     isImpersonating: !!impersonation.role
   };

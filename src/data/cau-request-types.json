@@ -150,7 +150,7 @@
     "id": "type-1773513752163",
     "title": "Visita a Instalaciones",
     "description": "Solicitud de visita oficial a instalaciones",
-    "category": "Direccion",
+    "category": "Dirección",
     "requiresUti": false,
     "requiresFile": false,
     "customFields": [

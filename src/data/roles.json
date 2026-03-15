@@ -1,0 +1,122 @@
+[
+  {
+    "id": "Admin",
+    "name": "Administrador",
+    "type": "Staff",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Soporte",
+    "name": "Soporte Administrativo",
+    "type": "Staff",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Media Manager",
+    "name": "Gestor de Contenido",
+    "type": "Staff",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Gestor Situación",
+    "name": "Gestor de Situación",
+    "type": "Staff",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Operador Situación",
+    "name": "Operador de Situación",
+    "type": "Staff",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Operador Logístico",
+    "name": "Operador Logístico",
+    "type": "Client",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Transitario",
+    "name": "Transitario",
+    "type": "Client",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Agente de Aduanas",
+    "name": "Agente de Aduanas",
+    "type": "Client",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Usuario",
+    "name": "Usuario General",
+    "type": "Client",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  },
+  {
+    "id": "Aduana",
+    "name": "Inspector de Aduana",
+    "type": "Staff",
+    "visibleZones": [
+      "TTP1",
+      "TTP2",
+      "TTIA",
+      "CANTIL",
+      "TECO"
+    ]
+  }
+]

@@ -1,4 +1,4 @@
-export type UserRole = 'Admin' | 'Soporte Operativo' | 'Soporte Aduanas' | 'Media Manager' | 'Operador Logístico' | 'Transitario' | 'Agente de Aduanas' | 'Gestor Situacion' | 'Operador Situacion' | 'Usuario' | 'Aduana';
+export type UserRole = 'Admin' | 'Soporte' | 'Soporte Operativo' | 'Soporte Aduanas' | 'Media Manager' | 'Operador Logístico' | 'Transitario' | 'Agente de Aduanas' | 'Gestor Situación' | 'Operador Situación' | 'Usuario' | 'Aduana';
 export type UserStatus = 'active' | 'pending';
 
 export interface Company {
@@ -12,6 +12,15 @@ export interface Company {
     uploadedBy: string; // Name of the admin/agent
     createdAt: string;
   }[];
+}
+
+export type RoleType = 'Staff' | 'Client';
+
+export interface RoleDefinition {
+  id: UserRole;
+  name: string;
+  type: RoleType;
+  visibleZones: string[]; // IDs of zones this role can see
 }
 
 export interface OccupancyZone {
@@ -31,6 +40,16 @@ export interface User {
 
   // New fields for registration
   registrationAttachments?: { name: string; url: string }[];
+  
+  preferences?: NotificationPreferences;
+}
+
+export interface NotificationPreferences {
+  notifyCauEmail: boolean;
+  notifyCauReplyEmail: boolean;
+  notifyQrAccessEmail: boolean;
+  notifyFleetUpdatesEmail: boolean;
+  notifyFleetMovementsEmail: boolean;
 }
 
 export interface NewsPost {
@@ -73,7 +92,9 @@ export type CauRequestStatus =
   | 'En curso' 
   | 'Pendiente'
   | 'Respondido'
-  | 'Archivada';
+  | 'Archivada'
+  | 'Caducada'
+  | 'Cerrada';
 
 export interface CustomField {
     id: string;
@@ -109,6 +130,7 @@ export interface CauRequest {
   subject: string;
   userId: string;
   userName: string;
+  companyId: string;
   createdAt: string;
   status: CauRequestStatus;
   category: CauRequestCategory;
@@ -165,6 +187,12 @@ export interface SystemConfig {
   heroImageId?: string;
   portalName?: string;
   portalDescription?: string;
+  defaultNotificationPreferences?: NotificationPreferences;
+  storagePaths?: {
+    documents: string;
+    images: string;
+    backups: string;
+  };
 }
 
 export type UtiDetails = {
@@ -240,4 +268,12 @@ export interface PedestrianAccessRequest {
   companyId: string;
   companyName: string;
   createdAt: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  bodyHtml: string;
+  placeholders: string[];
 }

@@ -7,6 +7,7 @@ import RequestForm from './components/request-form';
 import InboxTable from './components/inbox-table';
 import { useAuth } from '@/hooks/use-auth';
 import { readData, writeData } from '@/lib/actions';
+import { createCauRequest, updateCauRequests, checkAndExpireRequests } from './cau-actions';
 import ArchivedTable from './components/archived-table';
 import { differenceInMinutes } from 'date-fns';
 import { Lock } from 'lucide-react';
@@ -26,7 +27,8 @@ export default function CauPage() {
         const [requestsData, requestTypesData, categoriesData] = await Promise.all([
             readData<CauRequest[]>('cau-requests.json'),
             readData<CauRequestType[]>('cau-request-types.json'),
-            readData<CauCategory[]>('cau-request-categories.json')
+            readData<CauCategory[]>('cau-request-categories.json'),
+            checkAndExpireRequests() // Run check on load
         ]);
         setRequests(requestsData);
         setRequestTypes(requestTypesData);
@@ -44,7 +46,7 @@ export default function CauPage() {
   const handleNewRequest = async (newRequest: CauRequest) => {
     const updatedRequests = [newRequest, ...requests];
     setRequests(updatedRequests);
-    await writeData('cau-requests.json', updatedRequests);
+    await createCauRequest(newRequest);
     
     if (canManage) {
       setActiveTab('inbox');
@@ -55,7 +57,7 @@ export default function CauPage() {
 
   const handleUpdateRequests = async (updatedRequests: CauRequest[]) => {
     setRequests(updatedRequests);
-    await writeData('cau-requests.json', updatedRequests);
+    await updateCauRequests(updatedRequests);
   }
 
   const averageResponseTimes = useMemo(() => {
@@ -66,7 +68,7 @@ export default function CauPage() {
       if (!reqType) return;
       
       const firstAgentResponse = req.history.find(
-        msg => msg.authorRole === 'Admin' || msg.authorRole === 'Soporte Aduanas' || msg.authorRole === 'Soporte Operativo'
+        msg => msg.authorRole === 'Admin' || msg.authorRole === 'Soporte'
       );
 
       if (firstAgentResponse) {
@@ -95,7 +97,7 @@ export default function CauPage() {
     return <div>Cargando...</div>;
   }
 
-  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Soporte Operativo') || user?.roles.includes('Soporte Aduanas');
+  const canManage = user?.roles.includes('Admin') || user?.roles.includes('Soporte');
 
   return (
     <div className="space-y-8">
@@ -105,9 +107,9 @@ export default function CauPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={cn("grid w-full", canManage ? "grid-cols-3 md:w-[600px]" : "grid-cols-1 md:w-[200px]")}>
+        <TabsList className={cn("grid w-full", canManage ? "grid-cols-3 md:w-[600px]" : "grid-cols-2 md:w-[400px]")}>
           <TabsTrigger value="new-request">Nueva Solicitud</TabsTrigger>
-          {canManage && <TabsTrigger value="inbox">Bandeja de Entrada</TabsTrigger>}
+          <TabsTrigger value="inbox">{canManage ? "Bandeja de Entrada" : "Mis Solicitudes"}</TabsTrigger>
           {canManage && <TabsTrigger value="archived">Archivadas</TabsTrigger>}
         </TabsList>
         <TabsContent value="new-request">
@@ -119,35 +121,19 @@ export default function CauPage() {
             averageResponseTimes={averageResponseTimes}
           />
         </TabsContent>
-        {canManage ? (
-            <>
-                <TabsContent value="inbox">
-                    <InboxTable 
-                        initialRequests={requests} 
-                        onUpdateRequests={handleUpdateRequests} 
-                        categories={categories}
-                    />
-                </TabsContent>
-                <TabsContent value="archived">
-                    <ArchivedTable
-                        initialRequests={requests} 
-                        onUpdateRequests={handleUpdateRequests} 
-                    />
-                </TabsContent>
-            </>
-        ) : (
-            <TabsContent value="inbox">
-                <Card>
-                    <CardContent className="p-8">
-                        <Alert>
-                            <Lock className="h-4 w-4" />
-                            <AlertTitle>Acceso Restringido</AlertTitle>
-                            <AlertDescription>
-                                No tienes permisos para ver la bandeja de entrada de solicitudes.
-                            </AlertDescription>
-                        </Alert>
-                    </CardContent>
-                </Card>
+        <TabsContent value="inbox">
+            <InboxTable 
+                initialRequests={requests} 
+                onUpdateRequests={handleUpdateRequests} 
+                categories={categories}
+            />
+        </TabsContent>
+        {canManage && (
+            <TabsContent value="archived">
+                <ArchivedTable
+                    initialRequests={requests} 
+                    onUpdateRequests={handleUpdateRequests} 
+                />
             </TabsContent>
         )}
       </Tabs>

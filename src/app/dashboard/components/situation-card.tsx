@@ -42,7 +42,7 @@ export default function SituationCard({ zone, onUpdate }: SituationCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = React.useState(false);
-  const canEdit = useMemo(() => user?.roles.includes('Admin') || user?.roles.includes('Gestor Situacion'), [user]);
+  const canEdit = useMemo(() => user?.roles.includes('Admin') || user?.roles.includes('Gestor Situación'), [user]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

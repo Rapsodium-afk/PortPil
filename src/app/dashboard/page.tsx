@@ -3,27 +3,36 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import NewsFeed from './components/news-feed';
 import SituationCard from './components/situation-card';
-import type { CauRequest, NewsPost, SituationZone } from '@/lib/types';
+import ActivitySummary from './components/activity-summary';
+import type { CauRequest, NewsPost, SituationZone, PedestrianAccessRequest } from '@/lib/types';
 import { readData, writeData } from '@/lib/actions';
 import { useAuth } from '@/hooks/use-auth';
 import AgentPerformanceStats from './components/agent-performance-stats';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [news, setNews] = useState<NewsPost[]>([]);
   const [situation, setSituation] = useState<SituationZone[]>([]);
   const [requests, setRequests] = useState<CauRequest[]>([]);
-  const { user, users, isLoading: isAuthLoading } = useAuth();
+  const [accessRequests, setAccessRequests] = useState<PedestrianAccessRequest[]>([]);
+  const { user, users, isLoading: isAuthLoading, activeCompany } = useAuth();
+  const router = useRouter();
 
   const fetchData = useCallback(async () => {
-    const [newsData, situationData, requestsData] = await Promise.all([
+    const [newsData, situationData, requestsData, accessData] = await Promise.all([
       readData<NewsPost[]>('news.json'),
       readData<SituationZone[]>('situation.json'),
       readData<CauRequest[]>('cau-requests.json'),
+      readData<PedestrianAccessRequest[]>('access-requests.json'),
     ]);
-    setNews(newsData);
-    setSituation(situationData);
-    setRequests(requestsData);
+    setNews(newsData || []);
+    setSituation(situationData || []);
+    setRequests(requestsData || []);
+    setAccessRequests(accessData || []);
   }, []);
 
   useEffect(() => {
@@ -42,6 +51,16 @@ export default function DashboardPage() {
   
   const canViewStats = user?.roles.includes('Admin');
   const agentUsers = users.filter(u => u.roles.includes('Admin') || u.roles.includes('Soporte Operativo') || u.roles.includes('Soporte Aduanas'));
+
+  const filteredCauRequests = useMemo(() => {
+    if (user?.roles.includes('Admin') || user?.roles.includes('Soporte Operativo')) return requests;
+    return requests.filter(r => r.companyId === activeCompany?.id);
+  }, [requests, user, activeCompany]);
+
+  const filteredAccessRequests = useMemo(() => {
+    if (user?.roles.includes('Admin') || user?.roles.includes('Soporte Operativo')) return accessRequests;
+    return accessRequests.filter(r => r.companyId === activeCompany?.id);
+  }, [accessRequests, user, activeCompany]);
 
   return (
     <div className="grid gap-8">
@@ -71,11 +90,28 @@ export default function DashboardPage() {
       <Separator />
 
       <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-            <NewsFeed initialNews={news} onNewsChange={handleNewsChange} />
+        <div className="lg:col-span-2 space-y-8">
+            <ActivitySummary cauRequests={filteredCauRequests} accessRequests={filteredAccessRequests} />
+            <NewsFeed initialNews={news} onNewsChange={handleNewsChange} allowAdd={false} />
         </div>
-        {canViewStats && (
+        {canViewStats ? (
             <AgentPerformanceStats requests={requests} agents={agentUsers} />
+        ) : (
+          <div className="space-y-6">
+             <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Enlaces Rápidos</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-2">
+                  <Button variant="outline" className="w-full justify-start h-8 text-xs" onClick={() => router.push('/cau')}>
+                    <MessageSquare className="mr-2 h-3 w-3" /> Nueva Solicitud CAU
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start h-8 text-xs" onClick={() => router.push('/access-requests')}>
+                    <UserPlus className="mr-2 h-3 w-3" /> Nuevo Pase Acceso
+                  </Button>
+                </CardContent>
+             </Card>
+          </div>
         )}
       </div>
 
