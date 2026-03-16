@@ -26,7 +26,7 @@
   "situationInstructions": "La fecha de la pantalla principal indica la ultima modificación de las plazas libres\nLos estados de las terminales son los siguientes: \nAbierto\nLas terminales siempre estaran ABIERTAS o LLENAS.\n\nLas zonas Auxiliares son las unicas que pueden cerrar y el estado de cerrar lo provoca cuando finaliza  el uso de las mismas.\n\nCierran con menos de 20 camiones.\n\nCuando una zona Auxiliar abre provocara que una salida de TTP1 se cierre hasta que llegue el auxiliar a cubrir en la zona Auxiliar por lo cual esta zona ya se indicara abierta. \n\nCerrado\nLas terminales TTP1 y TTp2 no podran estar con esta opcion.\n\nLas zonas Auxiliares cuando esten cerradas estaran en CERRADO y condicion [Solo Salidas].\nCompleto\nEl lleno en TTP1 se producira cuando este con plazas reservadas para RO-RO o no queden plazas.\n\nEl lleno del resto de zonas (TTP2 y Zonas Auxiliares) se producirá cuando el numero de plazas sea 0\n\nEsta aplicación es de uso exclusivo para el equipo de seguridad",
   "heroTitle": "Portal de Noticias y Novedades",
   "heroSubtitle": "Manténgase informado sobre las últimas actualizaciones operativas y el estado de la terminal de Trafico pesado del puerto de Algeciras.",
-  "heroImageId": "img-1773495313842",
+  "heroImageId": "img-1773663325813",
   "defaultNotificationPreferences": {
     "notifyCauEmail": true,
     "notifyQrAccessEmail": true,

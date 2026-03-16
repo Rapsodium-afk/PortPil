@@ -1,5 +1,0 @@
-﻿
-> nextn@0.1.0 typecheck
-> tsc --noEmit
-
-src/app/admin/settings/components/database-settings.tsx(243,78): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?

@@ -26,7 +26,7 @@ const registerSchema = z.object({
   name: z.string().min(3, { message: 'El nombre completo es requerido.' }),
   email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
   password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
-  userType: z.enum(registerableRoles, { required_error: 'Debes seleccionar un tipo de operador.' }),
+  userType: z.enum(registerableRoles, { message: 'Debes seleccionar un tipo de operador.' }),
   companyName: z.string().min(2, { message: 'El nombre de la empresa es requerido.' }),
   taxId: z.string().min(9, { message: 'El CIF/NIF debe tener al menos 9 caracteres.' }),
   attachments: z.array(z.instanceof(File)).optional(),
