@@ -38,7 +38,7 @@ export function FleetTable({ vehicles, onVehiclesChange, showCompanyColumn }: Fl
       ...newVehicleData,
       status: 'Activo',
       history: [{
-        action: 'Alta' as const,
+        action: 'Alta' as 'Alta',
         performedAt: new Date().toISOString(),
         performedBy: user.name,
       }]
@@ -58,7 +58,7 @@ export function FleetTable({ vehicles, onVehiclesChange, showCompanyColumn }: Fl
           history: [
             ...v.history,
             {
-              action: newStatus ? 'Alta' as const : 'Baja' as const,
+              action: newStatus ? 'Alta' as 'Alta' : 'Baja' as 'Baja',
               performedAt: new Date().toISOString(),
               performedBy: user.name
             }

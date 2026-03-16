@@ -29,7 +29,7 @@ export function AddVehicleDialog({ isOpen, setIsOpen, onAddVehicle, existingPlat
         (plate) => !existingPlates.includes(plate.toUpperCase()),
         'Esta matrícula ya está registrada en tu flota.'
     ),
-    type: z.enum(allVehicleTypes as unknown as [string, ...string[]], { required_error: 'Debes seleccionar un tipo de vehículo.' }),
+    type: z.enum([allVehicleTypes[0], ...allVehicleTypes.slice(1)] as [string, ...string[]], { required_error: 'Debes seleccionar un tipo de vehículo.' }),
     expiryDate: z.string().optional(),
   });
 

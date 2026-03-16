@@ -1,5 +1,54 @@
 [
   {
+    "id": "cau-1773648663364-eavqxt20a",
+    "subject": "Visita a Instalaciones",
+    "userId": "3",
+    "userName": "Transportista Juan",
+    "companyId": "",
+    "createdAt": "2026-03-16T08:11:03.364Z",
+    "status": "Cerrada",
+    "category": "Dirección",
+    "type": "Visita a Instalaciones",
+    "uti": "",
+    "attachments": [],
+    "customFieldsData": {
+      "field-1773513711983": "Visita a TTP",
+      "field-1773513726611": "12/12/1923",
+      "field-1773513741475": "Visita a TTP"
+    },
+    "history": [
+      {
+        "id": "msg-1773648663364-10k93zics",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "Visita a TTP para verlo",
+        "createdAt": "2026-03-16T08:11:03.364Z"
+      },
+      {
+        "id": "msg-1773648718356-rny4ktg00",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Pendiente documentación\" por Admin.",
+        "createdAt": "2026-03-16T08:11:58.356Z"
+      },
+      {
+        "id": "msg-1773648721703-n06clbjo2",
+        "author": "Admin",
+        "authorRole": "Admin",
+        "content": "Pendiente documentacion",
+        "createdAt": "2026-03-16T08:12:01.703Z"
+      },
+      {
+        "id": "msg-1773648764845-ut7vrzk5g",
+        "author": "Sistema",
+        "authorRole": "Sistema",
+        "content": "Estado cambiado a \"Cerrada\" por Admin.",
+        "createdAt": "2026-03-16T08:12:44.845Z"
+      }
+    ],
+    "slaExpiresAt": "2026-04-15T08:11:03.364Z"
+  },
+  {
     "id": "cau-1773567142729",
     "subject": "Solicitud de visita a Ignacio",
     "userId": "3",

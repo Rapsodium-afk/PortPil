@@ -8,7 +8,7 @@ import type { User, NewsPost, OccupancyZone, CauRequest, CauRequestType } from '
 // Mock Users - Used for initial seeding if JSON is empty
 export const mockUsers: User[] = [
   { id: '1', name: 'Director General', email: 'admin@portpilot.test', roles: ['Admin'], status: 'active', companyIds: [], password: 'admin' },
-  { id: '2', name: 'Agente de Aduanas', email: 'aduana@portpilot.test', roles: ['Aduana'], status: 'active', companyIds: [], password: 'aduana' },
+  { id: '2', name: 'Agente de Aduanas', email: 'aduana@portpilot.test', roles: ['Agente de Aduanas'], status: 'active', companyIds: [], password: 'aduana' },
   { id: '3', name: 'Transportista Juan', email: 'user@portpilot.test', roles: ['Usuario'], status: 'active', companyIds: [], password: 'user' },
   { id: '4', name: 'Lucía Gómez', email: 'lucia.gomez@transport.com', roles: ['Usuario'], status: 'active', companyIds: [], password: 'password123' },
   { id: '5', name: 'Carlos Fernández', email: 'carlos.f@logistics.co', roles: ['Usuario'], status: 'active', companyIds: [], password: 'password123' },
@@ -80,7 +80,7 @@ export const mockCauRequests: CauRequest[] = [
     attachments: [{ name: 'DUA_12345.pdf', url: '#' }],
     history: [
       { id: 'msg-1', author: 'Transportista Juan', authorRole: 'Usuario', content: 'El documento de autoliquidación adjunto parece tener un error en el campo de valor declarado. ¿Pueden revisarlo?', createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-      { id: 'msg-2', author: 'Agente de Aduanas', authorRole: 'Aduana', content: 'Recibido. Por favor, adjunte también la factura comercial para poder contrastar la información.', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() }
+      { id: 'msg-2', author: 'Agente de Aduanas', authorRole: 'Agente de Aduanas', content: 'Recibido. Por favor, adjunte también la factura comercial para poder contrastar la información.', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() }
     ],
   },
   {

@@ -41,7 +41,22 @@ export function UtiField({ value, onChange, onValidationResult }: UtiFieldProps)
         throw new Error(response.error);
       }
       
-      const data = response.data?.[0] as any;
+      interface UtiApiResponse {
+        TRAILER_PLATE?: string;
+        plate?: string;
+        COMPANY?: string;
+        companyName?: string;
+        ENTRY_DATE?: string;
+        entranceDate?: string;
+        STATUS?: string;
+        state?: string;
+        LOCATION?: string;
+        zone?: string;
+        DAYS_IN_TERMINAL?: number;
+        duration?: string;
+      }
+      
+      const data = response.data?.[0] as UtiApiResponse;
 
       if (!data || !(data.TRAILER_PLATE || data.plate)) {
         throw new Error('La matrícula no es válida o no se encontraron datos asociados.');
@@ -53,12 +68,12 @@ export function UtiField({ value, onChange, onValidationResult }: UtiFieldProps)
       }
       
       const mappedDetails: UtiDetails = {
-        plate: data.TRAILER_PLATE || data.plate,
-        companyName: data.COMPANY || data.companyName,
-        entranceDate: data.ENTRY_DATE || data.entranceDate,
-        state: status,
-        zone: data.LOCATION || data.zone,
-        duration: data.DAYS_IN_TERMINAL !== undefined && data.DAYS_IN_TERMINAL !== null ? `${data.DAYS_IN_TERMINAL} días` : data.duration,
+        plate: data.TRAILER_PLATE || data.plate || '',
+        companyName: data.COMPANY || data.companyName || null,
+        entranceDate: data.ENTRY_DATE || data.entranceDate || null,
+        state: status || null,
+        zone: data.LOCATION || data.zone || null,
+        duration: data.DAYS_IN_TERMINAL !== undefined && data.DAYS_IN_TERMINAL !== null ? `${data.DAYS_IN_TERMINAL} días` : (data.duration || null),
       };
 
       setDetails(mappedDetails);

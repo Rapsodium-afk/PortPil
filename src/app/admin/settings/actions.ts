@@ -15,7 +15,7 @@ export async function bulkAddCompanies(
   try {
     const existingCompanies = await readData<Company[]>('companies.json');
     const existingTaxIds = new Set(existingCompanies.map(c => c.taxId.toLowerCase()));
-    const existingAccessIds = new Set(existingCompanies.filter(c => c.accessControlId).map(c => c.accessControlId!.toLowerCase()));
+    const existingAccessIds = new Set(existingCompanies.map(c => c.accessControlId?.toLowerCase()).filter((id): id is string => !!id));
 
     const companiesToAdd: Company[] = [];
 

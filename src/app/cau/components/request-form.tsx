@@ -51,26 +51,24 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
     const customFieldsSchema = (selectedRequestType.customFields || []).reduce((schema, field) => {
         let fieldSchema: z.ZodTypeAny;
         if (field.type === 'text') {
-            let stringSchema: any = z.string();
+            let stringSchema = z.string();
 
             if (field.maxLength) {
                 stringSchema = stringSchema.max(field.maxLength, `${field.name} no puede exceder los ${field.maxLength} caracteres.`);
             }
 
              if (field.required) {
-                stringSchema = stringSchema.min(1, `${field.name} es requerido.`);
+                fieldSchema = stringSchema.min(1, `${field.name} es requerido.`);
             } else {
-                stringSchema = stringSchema.optional().or(z.literal(''));
+                fieldSchema = stringSchema.optional().default('');
             }
-            fieldSchema = stringSchema;
         } else if (field.type === 'file') {
-            let fileSchema: any = z.array(z.instanceof(File));
+            let fileSchema = z.array(z.instanceof(File));
              if (field.required) {
-                fileSchema = fileSchema.min(1, `Debe adjuntar al menos un archivo para ${field.name}.`);
+                fieldSchema = fileSchema.min(1, `Debe adjuntar al menos un archivo para ${field.name}.`);
             } else {
-                fileSchema = fileSchema.optional();
+                fieldSchema = fileSchema.optional().default([]);
             }
-            fieldSchema = fileSchema;
         } else {
             fieldSchema = z.any();
         }
@@ -79,11 +77,11 @@ export default function RequestForm({ onNewRequest, requestTypes, categories, tr
 
     const utiSchema = selectedRequestType.requiresUti 
       ? z.object({ uti: z.string().min(1, 'La matrícula UTI es requerida.') })
-      : z.object({ uti: z.string().optional() });
+      : z.object({ uti: z.string().optional().default('') });
       
     const genericFileSchema = selectedRequestType.requiresFile
       ? z.object({ attachments: z.array(z.instanceof(File)).min(1, 'Debe adjuntar al menos un archivo.') })
-      : z.object({ attachments: z.array(z.instanceof(File)).optional() });
+      : z.object({ attachments: z.array(z.instanceof(File)).optional().default([]) });
 
     return baseSchema.merge(utiSchema).merge(genericFileSchema).merge(customFieldsSchema);
   }, [selectedRequestType]);
