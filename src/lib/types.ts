@@ -180,6 +180,7 @@ export interface SystemConfig {
   utiApiToken: string;
   emailConfig?: EmailConfig;
   dbConfig?: DatabaseConfig;
+  traceabilityDbConfig?: DatabaseConfig;
   modulePersistence?: ModulePersistence;
   situationInstructions?: string;
   heroTitle?: string;

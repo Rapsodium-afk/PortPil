@@ -4,7 +4,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
 import { query, testConnection } from './database';
+import { getDatabaseUrl } from './prisma';
 import type { SystemConfig, ModulePersistence, NewsPost, DatabaseConfig } from './types';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 const dataPath = path.join(process.cwd(), 'src', 'data');
 
@@ -189,4 +194,77 @@ export async function deleteFile(filePath: string): Promise<void> {
     } catch (error) {
         console.error('Error deleting file:', error);
     }
+}
+
+import { seedFromCsv } from './seeder';
+
+export async function initializeTraceabilityDbAction() {
+  console.log('Starting Traceability DB Initialization via Robust Proxy...');
+  try {
+    const url = getDatabaseUrl();
+    console.log('Database URL for init (masked):', url ? url.replace(/:[^@:]+@/, ':****@') : 'MISSING');
+
+    // 1. Run the custom full-setup script which handles tables and CSV
+    // This bypasses the Prisma CLI engine and uses native 'pg' driver which is more resilient to latency
+    console.log('Running npx tsx full-setup.ts...');
+    const { stdout, stderr } = await execAsync('npx tsx full-setup.ts', { timeout: 600000 }); // 10 min timeout
+    
+    console.log('Setup Output:', stdout);
+    if (stderr && !stderr.includes('Warning')) {
+        console.error('Setup Error:', stderr);
+    }
+    
+    if (stdout.includes('FINISHED SUCCESSFULLY')) {
+        const importedMatch = stdout.match(/Total processed: (\d+)/);
+        const count = importedMatch ? importedMatch[1] : 'varios';
+        return { success: true, message: `Base de datos inicializada e importada correctamente (${count} registros).` };
+    } else {
+        throw new Error('El script de configuración no terminó correctamente. Revisa los logs.');
+    }
+  } catch (error: any) {
+    console.error('Failed to initialize database:', error);
+    return { 
+      success: false, 
+      message: `Error de instalación: ${error.message || 'Error desconocido'}. La latencia de red con el servidor es demasiado alta o el archivo CSV no se encuentra.` 
+    };
+  }
+}
+export async function testTraceabilityConnectionAction(config: DatabaseConfig) {
+  console.log('Testing PostgreSQL connection to:', config.dbHost, config.dbPort);
+  try {
+    const url = `postgresql://${config.dbUser}:${config.dbPassword}@${config.dbHost}:${config.dbPort || 5432}/${config.dbName}?schema=public&connect_timeout=60&socket_timeout=60&sslmode=disable`;
+    
+    // We create a temporary client to test this specific config
+    const { PrismaClient } = await import('@prisma/client');
+    const { Pool } = await import('pg');
+    const { PrismaPg } = await import('@prisma/adapter-pg');
+    
+    console.log('Attempting connect with URL (masked):', url.replace(/:[^@:]+@/, ':****@'));
+
+    const startTime = Date.now();
+    const pool = new Pool({ 
+        connectionString: url, 
+        connectionTimeoutMillis: 30000, // 30s
+        ssl: false
+    });
+    
+    const adapter = new PrismaPg(pool as any);
+    const testPrisma = new PrismaClient({ adapter });
+    
+    // TEST: Actually execute a simple query, not just connect
+    await testPrisma.$queryRaw`SELECT 1`;
+    
+    const duration = Date.now() - startTime;
+    console.log(`PostgreSQL connection test: CONNECTED AND QUERIED in ${duration}ms`);
+    await testPrisma.$disconnect();
+    await pool.end();
+    
+    return { success: true, message: `Conexión con PostgreSQL exitosa (${duration}ms). El servidor responde a consultas.` };
+  } catch (error: any) {
+    console.error('PostgreSQL Test Connection failed:', error);
+    return { 
+      success: false, 
+      message: `Error de conexión: ${error.message || 'Sin respuesta'}. El servidor tarda demasiado en responder (>30s) o la red es muy inestable.` 
+    };
+  }
 }

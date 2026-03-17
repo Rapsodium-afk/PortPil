@@ -37,5 +37,12 @@
     "documents": "C:\\PortPilot\\Data\\Documents",
     "images": "C:\\PortPilot\\Data\\Images",
     "backups": "C:\\PortPilot\\Data\\Backups"
+  },
+  "traceabilityDbConfig": {
+    "dbHost": "88.2.196.170",
+    "dbPort": 5450,
+    "dbUser": "postgres",
+    "dbPassword": "Cont1321!",
+    "dbName": "trazability"
   }
 }

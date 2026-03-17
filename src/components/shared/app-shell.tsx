@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Anchor, Bell, ChevronDown, LayoutDashboard, LogOut, MessageSquare, PanelLeft, Settings,
+  Anchor, Bell, ChevronDown, ChevronRight, LayoutDashboard, LogOut, MessageSquare, PanelLeft, Settings,
   Ship, Users, FlaskConical, FolderKanban, Truck, Building2, User as UserIcon,
   ShieldCheck, HardHat, Landmark, Megaphone, UserCheck, ClipboardList, ClipboardCheck,
   UserPlus, QrCode, KeySquare, Tags, FileText, BarChart3
@@ -44,28 +44,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const navItems = useMemo(() => {
     const allItems = [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Soporte', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situación', 'Operador Situación'] as UserRole[] },
-      { href: '/cau', label: 'CAU', icon: MessageSquare, roles: ['Admin', 'Soporte', 'Soporte', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
-      { href: '/access-requests', label: 'Acceso Conductores', icon: UserPlus, roles: ['Admin', 'Soporte', 'Soporte', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Agente de Aduanas'] as UserRole[] },
-      { href: '/expediente', label: 'Mi Expediente', icon: FolderKanban, roles: ['Admin', 'Soporte', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[]},
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situación', 'Operador Situación'] as UserRole[] },
+      { href: '/traceability', label: 'Trazabilidad APBA', icon: BarChart3, roles: ['Admin', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas', 'Gestor Situación', 'Operador Situación'] as UserRole[] },
+      { href: '/cau', label: 'CAU', icon: MessageSquare, roles: ['Admin', 'Soporte', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
+      { href: '/access-requests', label: 'Acceso Conductores', icon: UserPlus, roles: ['Admin', 'Soporte', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
+      { href: '/expediente', label: 'Mi Expediente', icon: FolderKanban, roles: ['Admin', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[]},
       { href: '/flota', label: 'Gestor de Flotas', icon: Truck, roles: ['Operador Logístico', 'Admin'] as UserRole[] },
       { href: '/situacion', label: 'Actualizar Plazas', icon: ClipboardList, roles: ['Admin', 'Gestor Situación', 'Operador Situación'] as UserRole[] },
-      { href: '/admin/companies', label: 'Gestión Empresas', icon: Building2, roles: ['Admin', 'Soporte'] as UserRole[] },
-      { href: '/admin/users', label: 'Gestión Usuarios', icon: Users, roles: ['Admin', 'Soporte'] as UserRole[] },
-      { href: '/admin/roles', label: 'Gestión Roles', icon: KeySquare, roles: ['Admin'] as UserRole[] },
-      { href: '/admin/content', label: 'Gestor de Contenido', icon: Megaphone, roles: ['Admin', 'Media Manager'] as UserRole[] },
       { href: '/comunicados', label: 'Comunicados', icon: FileText, roles: ['Admin', 'Soporte', 'Media Manager', 'Operador Logístico', 'Transitario', 'Agente de Aduanas'] as UserRole[] },
-      { href: '/admin/cau-config', label: 'Configuración CAU', icon: Tags, roles: ['Admin', 'Soporte'] as UserRole[] },
-      { href: '/admin/performance', label: 'Rendimiento de Agentes', icon: BarChart3, roles: ['Admin'] as UserRole[] },
-      { href: '/admin/settings', label: 'Ajustes', icon: Settings, roles: ['Admin'] as UserRole[] },
-      { href: '/admin/api-test', label: 'Prueba de API', icon: FlaskConical, roles: ['Admin'] as UserRole[] },
+      { 
+        label: 'Administración', 
+        icon: Settings, 
+        roles: ['Admin', 'Soporte'] as UserRole[],
+        subItems: [
+          { href: '/admin/companies', label: 'Gestión Empresas', roles: ['Admin', 'Soporte'] as UserRole[] },
+          { href: '/admin/users', label: 'Gestión Usuarios', roles: ['Admin', 'Soporte'] as UserRole[] },
+          { href: '/admin/roles', label: 'Gestión Roles', roles: ['Admin'] as UserRole[] },
+          { href: '/admin/cau-config', label: 'Configuración CAU', roles: ['Admin', 'Soporte'] as UserRole[] },
+          { href: '/admin/content', label: 'Gestor de Contenido', roles: ['Admin', 'Media Manager'] as UserRole[] },
+          { href: '/admin/performance', label: 'Rendimiento', roles: ['Admin'] as UserRole[] },
+          { href: '/admin/settings', label: 'Ajustes de Sistema', roles: ['Admin'] as UserRole[] },
+          { href: '/admin/api-test', label: 'Prueba de API', roles: ['Admin'] as UserRole[] },
+        ]
+      },
     ];
 
     if (!user || !Array.isArray(roles)) return [];
 
-    return allItems.filter(item => item.roles.some(role => roles.includes(role)));
+    return allItems.filter(item => {
+      const parentHasRole = item.roles.some(role => roles.includes(role));
+      if (!parentHasRole) return false;
+      
+      if (item.subItems) {
+        item.subItems = item.subItems.filter(sub => sub.roles.some(role => roles.includes(role)));
+        return item.subItems.length > 0;
+      }
+      
+      return true;
+    });
 
   }, [user, roles]);
+
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = React.useState(pathname.startsWith('/admin'));
 
   const RoleIcon = useMemo(() => {
     if (!user || !Array.isArray(roles) || roles.length === 0) {
@@ -125,36 +145,68 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className={`font-semibold ${!isSidebarOpen && 'hidden'}`}>{config?.portalName || 'PortPilot CAU'}</span>
         </div>
         <nav className="flex-1 space-y-2 p-4">
-          {navItems.map((item) => (
-             isSidebarOpen ? (
-            <Button
-              key={item.href}
-              variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
-              className="w-full justify-start"
-              onClick={() => router.push(item.href)}
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Button>
-            ) : (
-            <Tooltip key={item.href} delayDuration={0}>
-                <TooltipTrigger asChild>
+          {navItems.map((item) => {
+            const hasSubItems = item.subItems && item.subItems.length > 0;
+            const isActive = item.href ? pathname.startsWith(item.href) : (hasSubItems ? pathname.startsWith('/admin') : false);
+
+            if (!isSidebarOpen) {
+              return (
+                <Tooltip key={item.label} delayDuration={0}>
+                  <TooltipTrigger asChild>
                     <Button
-                        variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="w-full"
-                        onClick={() => router.push(item.href)}
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="icon"
+                      className="w-full"
+                      onClick={() => item.href ? router.push(item.href) : (hasSubItems && setIsAdminMenuOpen(!isAdminMenuOpen))}
                     >
-                        <item.icon className="h-5 w-5" />
-                        <span className="sr-only">{item.label}</span>
+                      <item.icon className="h-5 w-5" />
+                      <span className="sr-only">{item.label}</span>
                     </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
                     <p>{item.label}</p>
-                </TooltipContent>
-            </Tooltip>
-            )
-          ))}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return (
+              <div key={item.label} className="space-y-1">
+                <Button
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  className="w-full justify-start"
+                  onClick={() => {
+                    if (item.href) {
+                      router.push(item.href);
+                    } else if (hasSubItems) {
+                      setIsAdminMenuOpen(!isAdminMenuOpen);
+                    }
+                  }}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {hasSubItems && (
+                    isAdminMenuOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                  )}
+                </Button>
+
+                {hasSubItems && isAdminMenuOpen && (
+                  <div className="ml-6 space-y-1 border-l pl-2">
+                    {item.subItems!.map((sub) => (
+                      <Button
+                        key={sub.href}
+                        variant={pathname === sub.href ? 'secondary' : 'ghost'}
+                        className="h-8 w-full justify-start text-sm font-normal"
+                        onClick={() => router.push(sub.href)}
+                      >
+                        {sub.label}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
       </aside>
 

@@ -4,20 +4,19 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Database, Save, TestTube } from 'lucide-react';
-import type { SystemConfig, DatabaseConfig } from '@/lib/types';
+import { Database, Save, TestTube, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import type { SystemConfig, DatabaseConfig, ModulePersistence } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { writeData, readData, testConnectionAction, syncDataFromJsonToDbAction } from '@/lib/actions';
+import { writeData, readData, testConnectionAction, syncDataFromJsonToDbAction, testTraceabilityConnectionAction } from '@/lib/actions';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { ModulePersistence } from '@/lib/types';
 
 const dbConfigSchema = z.object({
   dbHost: z.string().optional(),
@@ -27,7 +26,12 @@ const dbConfigSchema = z.object({
   dbName: z.string().optional(),
 });
 
-type DbConfigFormValues = z.infer<typeof dbConfigSchema>;
+const dualDbConfigSchema = z.object({
+  system: dbConfigSchema,
+  traceability: dbConfigSchema,
+});
+
+type DualDbConfigFormValues = z.infer<typeof dualDbConfigSchema>;
 
 interface DatabaseSettingsProps {
   initialConfig: SystemConfig;
@@ -35,50 +39,72 @@ interface DatabaseSettingsProps {
 
 export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProps) {
   const { toast } = useToast();
+  const [isTestingSystem, setIsTestingSystem] = React.useState(false);
+  const [isTestingTraceability, setIsTestingTraceability] = React.useState(false);
 
-  const form = useForm<DbConfigFormValues>({
-    resolver: zodResolver(dbConfigSchema),
+  const form = useForm<DualDbConfigFormValues>({
+    resolver: zodResolver(dualDbConfigSchema),
     defaultValues: {
-      dbHost: initialConfig.dbConfig?.dbHost || 'localhost',
-      dbPort: initialConfig.dbConfig?.dbPort || 3306,
-      dbUser: initialConfig.dbConfig?.dbUser || '',
-      dbPassword: initialConfig.dbConfig?.dbPassword || '',
-      dbName: initialConfig.dbConfig?.dbName || '',
+      system: {
+        dbHost: initialConfig.dbConfig?.dbHost || 'localhost',
+        dbPort: initialConfig.dbConfig?.dbPort || 3306,
+        dbUser: initialConfig.dbConfig?.dbUser || '',
+        dbPassword: initialConfig.dbConfig?.dbPassword || '',
+        dbName: initialConfig.dbConfig?.dbName || '',
+      },
+      traceability: {
+        dbHost: initialConfig.traceabilityDbConfig?.dbHost || 'localhost',
+        dbPort: initialConfig.traceabilityDbConfig?.dbPort || 5432,
+        dbUser: initialConfig.traceabilityDbConfig?.dbUser || '',
+        dbPassword: initialConfig.traceabilityDbConfig?.dbPassword || '',
+        dbName: initialConfig.traceabilityDbConfig?.dbName || '',
+      },
     },
   });
 
-  const onSave = async (data: DbConfigFormValues) => {
+  const onSave = async (data: DualDbConfigFormValues) => {
     const updatedConfig: SystemConfig = {
       ...initialConfig,
-      dbConfig: data,
+      dbConfig: data.system,
+      traceabilityDbConfig: data.traceability,
     };
     await writeData('config.json', updatedConfig);
     toast({
-      title: 'Configuración de Base de Datos guardada',
-      description: 'Los ajustes de conexión han sido actualizados en el archivo de configuración.',
+      title: 'Configuraciones de Base de Datos guardadas',
+      description: 'Los ajustes de conexión han sido actualizados.',
     });
   };
 
-  const handleTestConnection = async () => {
-    const data = form.getValues();
+  const handleTestConnection = async (type: 'system' | 'traceability') => {
+    const data = form.getValues()[type];
+    const setIsTesting = type === 'system' ? setIsTestingSystem : setIsTestingTraceability;
+    
+    setIsTesting(true);
     toast({
-      title: 'Probando conexión...',
-      description: 'Conectando con MariaDB/MySQL...',
+      title: `Probando conexión ${type}...`,
+      description: `Conectando con ${type === 'system' ? 'MariaDB/MySQL' : 'PostgreSQL'}...`,
     });
     
-    const result = await testConnectionAction(data);
-    
-    if (result.success) {
-      toast({
-        title: 'Conexión exitosa',
-        description: 'Se ha podido establecer conexión con la base de datos.',
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Error de conexión',
-        description: result.message,
-      });
+    try {
+      if (type === 'system') {
+          const result = await testConnectionAction(data);
+          if (result.success) {
+              toast({ title: 'Conexión exitosa', description: 'Se ha podido establecer conexión con MariaDB.' });
+          } else {
+              toast({ variant: 'destructive', title: 'Error de conexión MariaDB', description: result.message });
+          }
+      } else {
+          const result = await testTraceabilityConnectionAction(data);
+          if (result.success) {
+              toast({ title: 'Conexión exitosa', description: 'Se ha podido establecer conexión con PostgreSQL.' });
+          } else {
+              toast({ variant: 'destructive', title: 'Error de conexión PostgreSQL', description: result.message });
+          }
+      }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error crítico', description: error.message || 'Error inesperado al probar la conexión.' });
+    } finally {
+        setIsTesting(false);
     }
   };
 
@@ -102,8 +128,6 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
       title: 'Sincronizando...',
       description: `Migrando datos de ${module} (JSON -> DB)...`
     });
-    // In actions.ts, we already handled ON DUPLICATE KEY UPDATE in writeToDb.
-    // We just need to trigger a read(json) and write(db).
     try {
         await syncDataFromJsonToDbAction(module);
         toast({
@@ -120,105 +144,136 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center"><Database className="mr-2"/>Ajustes de Base de Datos</CardTitle>
-        <CardDescription>
-          Configura los parámetros de conexión para la base de datos MySQL o MariaDB.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSave)} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="dbHost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Host</FormLabel>
-                    <FormControl><Input {...field} placeholder="localhost" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dbPort"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Puerto</FormLabel>
-                    <FormControl><Input type="number" {...field} placeholder="3306" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dbUser"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Usuario</FormLabel>
-                    <FormControl><Input {...field} placeholder="root" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dbPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl><Input type="password" {...field} placeholder="••••••••" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="dbName"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Nombre de la Base de Datos</FormLabel>
-                    <FormControl><Input {...field} placeholder="portpilot_db" /></FormControl>
-                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-                <Button type="submit">
-                    <Save className="mr-2 h-4 w-4" />
-                    Guardar Configuración
-                </Button>
-                <Button type="button" variant="outline" onClick={handleTestConnection}>
-                    <TestTube className="mr-2 h-4 w-4" />
-                    Probar Conexión Real
-                </Button>
-            </div>
-          </form>
-        </Form>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center"><Database className="mr-2"/>Ajustes de Base de Datos</CardTitle>
+          <CardDescription>
+            Configura los parámetros de conexión para el sistema (MariaDB) y la trazabilidad (PostgreSQL).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSave)} className="space-y-8">
+              <Tabs defaultValue="system">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="system">Base de Datos Sistema (MariaDB)</TabsTrigger>
+                  <TabsTrigger value="traceability">Base de Datos Trazabilidad (PostgreSQL)</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="system" className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="system.dbHost"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Host</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="system.dbPort"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Puerto</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="system.dbUser"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Usuario</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="system.dbPassword"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Contraseña</FormLabel><FormControl><Input type="password" {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="system.dbName"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>Nombre DB</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => handleTestConnection('system')}
+                    disabled={isTestingSystem}
+                  >
+                    {isTestingSystem ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TestTube className="mr-2 h-4 w-4" />}
+                    Probar Conexión MariaDB
+                  </Button>
+                </TabsContent>
 
-        <Separator className="my-8" />
+                <TabsContent value="traceability" className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="traceability.dbHost"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Host PostgreSQL</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="traceability.dbPort"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Puerto PostgreSQL</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="traceability.dbUser"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Usuario PostgreSQL</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="traceability.dbPassword"
+                      render={({ field }) => (
+                        <FormItem><FormLabel>Contraseña PostgreSQL</FormLabel><FormControl><Input type="password" {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="traceability.dbName"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>Nombre DB PostgreSQL</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => handleTestConnection('traceability')}
+                    disabled={isTestingTraceability}
+                  >
+                    {isTestingTraceability ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TestTube className="mr-2 h-4 w-4" />}
+                    Probar Configuración PostgreSQL
+                  </Button>
+                </TabsContent>
+              </Tabs>
 
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium">Migración y Persistencia por Módulo</h3>
-            <p className="text-sm text-muted-foreground">
-              Activa el uso de la base de datos para cada sección de forma independiente.
-            </p>
-          </div>
+              <Button type="submit" size="lg" className="w-full md:w-auto">
+                <Save className="mr-2 h-4 w-4" /> Guardar Todas las Configuraciones
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Importante</AlertTitle>
-            <AlertDescription>
-              Asegúrate de que la conexión sea exitosa antes de activar el modo DB.
-              Se recomienda "Sincronizar Datos" inmediatamente después de activar el modo DB para no perder información.
-            </AlertDescription>
-          </Alert>
-
+      <Card>
+        <CardHeader>
+          <CardTitle>Persistencia de Módulos (MariaDB)</CardTitle>
+          <CardDescription>Gestión de datos de la aplicación base.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="grid gap-6">
             {(['users', 'news', 'cau', 'occupancy', 'fleet'] as const).map((module) => {
               const currentMode = initialConfig.modulePersistence?.[module] || 'json';
@@ -231,30 +286,20 @@ export default function DatabaseSettings({ initialConfig }: DatabaseSettingsProp
                        module === 'occupancy' ? 'Ocupación de Plazas' : 
                        module === 'users' ? 'Gestión de Usuarios' : 'Noticias'}
                     </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Modo actual: <span className="font-medium uppercase">{currentMode}</span>
-                    </p>
+                    <p className="text-sm text-muted-foreground">Modo: <span className="uppercase">{currentMode}</span></p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => handleSync(module)}
-                      disabled={currentMode !== 'db'}
-                    >
-                      <RefreshCw className="mr-2 h-3 w-3" /> Sincronizar JSON {"->"} DB
+                    <Button size="sm" variant="outline" onClick={() => handleSync(module)} disabled={currentMode !== 'db'}>
+                      <RefreshCw className="mr-2 h-3 w-3" /> Sincronizar
                     </Button>
-                    <Switch 
-                      checked={currentMode === 'db'}
-                      onCheckedChange={(checked) => togglePersistence(module, checked ? 'db' : 'json')}
-                    />
+                    <Switch checked={currentMode === 'db'} onCheckedChange={(checked) => togglePersistence(module, checked ? 'db' : 'json')} />
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

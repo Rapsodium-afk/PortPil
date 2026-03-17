@@ -1,0 +1,44 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Movimiento_Vehiculo {
+  id                   Int       @id @default(autoincrement())
+  terminal_id          String
+  matricula            String
+  fecha_hora_entrada   DateTime  @default(now())
+  fecha_hora_salida    DateTime?
+  tipo_vehiculo        String
+  empresa              String?
+  posicion             String?   // Compliance: Posición en la plaza
+  estado_aduanero      String?   // Compliance: Estado aduanero
+  
+  @@index([terminal_id, fecha_hora_entrada])
+  @@index([fecha_hora_salida])
+  @@map("movimiento_vehiculo")
+}
+
+model Terminal_Zona {
+  id               String   @id
+  nombre           String
+  capacidad_maxima Int
+  descripcion      String?
+  activa           Boolean  @default(true)
+  
+  @@map("terminal_zona")
+}
+
+model Historico_Ocupacion_Snapshot {
+  id          Int      @id @default(autoincrement())
+  terminal_id String
+  fecha_hora  DateTime @default(now())
+  ocupacion   Int
+  
+  @@index([terminal_id, fecha_hora])
+  @@map("historico_ocupacion_snapshot")
+}
