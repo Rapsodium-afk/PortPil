@@ -17,6 +17,7 @@ import { ReportsSection } from './components/reports-section';
 import { MovementSearch } from './components/movement-search';
 import { CSVUploader } from './components/csv-uploader';
 import { TraceabilityEmptyState } from './components/empty-state';
+import { TraceabilityFilters } from './components/traceability-filters';
 import { prisma } from '@/lib/prisma';
 import { 
     getOccupancyByTemporalScale, 
@@ -27,7 +28,8 @@ import {
     getRealTimeStatusData
 } from '@/lib/traceability';
 import { TerminalStatusDashboard } from './components/terminal-status-dashboard';
-import { BarChart3, Clock, Database, FileOutput, Server, Info, LineChart, PieChart, Search, Activity, ShieldAlert, Zap } from 'lucide-react';
+import { SnapshotManager } from './components/snapshot-manager';
+import { BarChart3, Clock, Database, FileOutput, Server, Info, LineChart, PieChart, Search, Activity, ShieldAlert, Zap, History } from 'lucide-react';
 
 async function seedInitialDataIfNeeded() {
   const zoneCount = await prisma.terminal_Zona.count();
@@ -76,8 +78,8 @@ async function seedInitialDataIfNeeded() {
   }
 }
 
-async function DashboardOverview() {
-  const summary = await getDashboardSummary();
+async function DashboardOverview({ zone }: { zone?: string }) {
+  const summary = await getDashboardSummary(zone);
   
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -110,10 +112,10 @@ async function DashboardOverview() {
   );
 }
 
-async function AnalysisSection() {
+async function AnalysisSection({ year, month, zone }: { year?: number, month?: number, zone?: string }) {
     const [stayData, distributionData] = await Promise.all([
-        getAverageStayData(),
-        getVehicleDistributionData()
+        getAverageStayData(year, month, zone),
+        getVehicleDistributionData(year, month, zone)
     ]);
     
     return (
@@ -124,41 +126,55 @@ async function AnalysisSection() {
     );
 }
 
-async function TrendSection() {
-    const trendData = await getOccupancyTrendData();
+async function TrendSection({ year, month, zone }: { year?: number, month?: number, zone?: string }) {
+    const trendData = await getOccupancyTrendData(year, month, zone);
     return <TrendChart data={trendData} />;
 }
 
-async function RealTimeDashboard() {
-    const zones = await getRealTimeStatusData();
+async function RealTimeDashboard({ zone }: { zone?: string }) {
+    const zones = await getRealTimeStatusData(zone);
     return <TerminalStatusDashboard zones={zones} />;
 }
 
-async function ReportingArea() {
+async function ReportingArea({ year: fYear, month: fMonth, zone: fZone }: { year?: number, month?: number, zone?: string }) {
     const [year, month, day, hour, zones, companies, longStay, forecast] = await Promise.all([
-        getOccupancyByTemporalScale('year'),
-        getOccupancyByTemporalScale('month'),
-        getOccupancyByTemporalScale('day'),
-        getOccupancyByTemporalScale('hour'),
-        getZoneOccupancyByMonth(),
-        getCompanyVolumeData(),
+        getOccupancyByTemporalScale('year', fMonth, fYear, fZone),
+        getOccupancyByTemporalScale('month', fMonth, fYear, fZone),
+        getOccupancyByTemporalScale('day', fMonth, fYear, fZone),
+        getOccupancyByTemporalScale('hour', fMonth, fYear, fZone),
+        getZoneOccupancyByMonth(fYear, fMonth, fZone),
+        getCompanyVolumeData(fYear, fMonth, fZone),
         getLongStayAlerts(),
         getPredictiveForecast()
     ]);
 
+    const snapshots = await prisma.historico_Ocupacion_Snapshot.findMany({
+        orderBy: { fecha_hora: 'desc' },
+        take: 10
+    });
+
     return (
-        <ReportsSection 
-            temporalData={{ year, month, day, hour }}
-            zoneData={zones}
-            companyData={companies}
-            longStayData={longStay}
-            forecastData={forecast}
-        />
+        <div className="space-y-8">
+            <ReportsSection 
+                temporalData={{ year, month, day, hour }}
+                zoneData={zones}
+                companyData={companies}
+                longStayData={longStay}
+                forecastData={forecast}
+                zone={fZone}
+            />
+            <SnapshotManager snapshots={snapshots} />
+        </div>
     );
 }
 
-export default async function TraceabilityPage() {
+export default async function TraceabilityPage(props: { searchParams?: Promise<{ year?: string, month?: string, zone?: string }> }) {
+  const searchParams = props.searchParams ? await props.searchParams : {};
   const connection = await checkDbConnection();
+  
+  const year = searchParams.year && searchParams.year !== 'Todos' ? parseInt(searchParams.year) : undefined;
+  const month = searchParams.month && searchParams.month !== '0' ? parseInt(searchParams.month) : undefined;
+  const zone = searchParams.zone && searchParams.zone !== 'Todas' ? searchParams.zone : undefined;
 
   if (!connection.connected) {
     return (
@@ -195,6 +211,7 @@ export default async function TraceabilityPage() {
                 Visualización avanzada de operaciones portuarias en tiempo real con motor de datos PostgreSQL.
             </p>
         </div>
+        
         <div className="flex flex-col sm:flex-row gap-3">
             <CSVUploader />
             <Button variant="outline" className="shadow-sm h-11">
@@ -207,6 +224,8 @@ export default async function TraceabilityPage() {
             </Button>
         </div>
       </div>
+      
+      <TraceabilityFilters />
       
       {/* Real-time Status Dashboard (Compliance Requirement) */}
       <div className="space-y-4">
@@ -222,7 +241,7 @@ export default async function TraceabilityPage() {
         <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[1,2,3,4].map(i => <Card key={i} className="h-32 animate-pulse bg-slate-100 border-none" />)}
         </div>}>
-            <RealTimeDashboard />
+            <RealTimeDashboard zone={zone} />
         </Suspense>
       </div>
 
@@ -233,7 +252,7 @@ export default async function TraceabilityPage() {
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
             <Suspense fallback={<div className="lg:col-span-2 h-[400px] bg-slate-100 animate-pulse rounded-xl" />}>
-                <TrendSection />
+                <TrendSection year={year} month={month} zone={zone} />
             </Suspense>
             
             <Card className="lg:col-span-1 border-none shadow-lg bg-gradient-to-br from-blue-600 to-blue-800 text-white overflow-hidden relative">
@@ -284,7 +303,7 @@ export default async function TraceabilityPage() {
             <PieChart className="h-4 w-4" /> Distribución y Estancia
         </div>
         <Suspense fallback={<div className="h-[400px] bg-slate-100 animate-pulse rounded-xl" />}>
-            <AnalysisSection />
+            <AnalysisSection year={year} month={month} zone={zone} />
         </Suspense>
       </div>
 
@@ -294,7 +313,7 @@ export default async function TraceabilityPage() {
             <BarChart3 className="h-4 w-4" /> Análisis de Inteligencia de Negocio
         </div>
         <Suspense fallback={<div className="h-[500px] bg-slate-100 animate-pulse rounded-xl" />}>
-            <ReportingArea />
+            <ReportingArea year={year} month={month} zone={zone} />
         </Suspense>
       </div>
 

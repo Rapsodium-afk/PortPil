@@ -24,6 +24,8 @@ import { TrendChart } from './trend-chart';
 import { DistributionChart } from './distribution-chart';
 import { AdvancedQueries } from './advanced-queries';
 import { AdvancedInsights } from './advanced-insights';
+import { startAsyncReportAction } from '@/lib/traceability';
+import { AsyncProgress } from './async-progress';
 
 interface ReportsSectionProps {
     temporalData: { [key: string]: any[] };
@@ -31,6 +33,7 @@ interface ReportsSectionProps {
     companyData: any[];
     longStayData: any[];
     forecastData: any[];
+    zone?: string;
 }
 
 export function ReportsSection({ 
@@ -38,7 +41,8 @@ export function ReportsSection({
     zoneData: initialZoneData, 
     companyData: initialCompanyData,
     longStayData,
-    forecastData
+    forecastData,
+    zone
 }: ReportsSectionProps) {
     const [scale, setScale] = useState<'hour' | 'day' | 'month' | 'year'>('day');
     const [selectedMonth, setSelectedMonth] = useState<string>(String(getMonth(new Date()) + 1));
@@ -52,11 +56,13 @@ export function ReportsSection({
     const [companyData, setCompanyData] = useState(initialCompanyData);
     const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
     const [zoneTrends, setZoneTrends] = useState<Record<string, any[]>>({});
+    const [activeJobId, setActiveJobId] = useState<string | null>(null);
+    const [jobResult, setJobResult] = useState<any>(null);
 
     const handleFetchHistorical = async () => {
         setLoading(true);
         try {
-            const data = await getHistoricalAnalyticsAction(Number(selectedMonth), Number(selectedYear));
+            const data = await getHistoricalAnalyticsAction(Number(selectedMonth), Number(selectedYear), zone);
             setTemporalData({ ...temporalData, day: data.temporal, month: data.temporal });
             setZoneData(data.zones);
             setCompanyData(data.companies as any);
@@ -81,6 +87,24 @@ export function ReportsSection({
         setIsFallback(false);
         setDayOfWeekData([]);
         setZoneTrends({});
+        setActiveJobId(null);
+        setJobResult(null);
+    };
+
+    const handleStartAsyncReport = async (type: string) => {
+        setActiveJobId(null); // Reset previous
+        const data = await startAsyncReportAction(type);
+        setActiveJobId(data.jobId as string);
+    };
+
+    const handleJobComplete = (result: any) => {
+        setJobResult(result);
+        if (activeJobId && result) {
+            // Depending on the job, update relevant UI data
+            if (result.forecast) {
+                // ... update forecast UI
+            }
+        }
     };
     
     return (
@@ -160,6 +184,16 @@ export function ReportsSection({
                             <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] py-1 font-bold">
                                 <Info className="h-3 w-3 mr-1" /> {selectedMonth === '0' ? `Anual ${selectedYear}` : `${format(new Date(Number(selectedYear), Number(selectedMonth)-1), 'MMMM yyyy', { locale: es })}`}
                             </Badge>
+                        )}
+
+                        {activeJobId && (
+                            <div className="w-full mt-4">
+                                <AsyncProgress 
+                                    jobId={activeJobId} 
+                                    onComplete={handleJobComplete} 
+                                    title="Calculando Informe de Millones de Registros" 
+                                />
+                            </div>
                         )}
                     </div>
 
@@ -296,9 +330,18 @@ export function ReportsSection({
                         <TabsContent value="compliance" className="p-6 m-0 outline-none space-y-8">
                             <div className="grid md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                        <ShieldAlert className="h-4 w-4 text-rose-500" /> Alarmas Larga Estancia
-                                    </h4>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <ShieldAlert className="h-4 w-4 text-rose-500" /> Alarmas Larga Estancia
+                                        </h4>
+                                        <Button 
+                                            variant="ghost" 
+                                            className="h-6 text-[10px] font-bold text-blue-600 uppercase"
+                                            onClick={() => handleStartAsyncReport('long-stay')}
+                                        >
+                                            Refrescar Asíncrono
+                                        </Button>
+                                    </div>
                                     <div className="space-y-3">
                                         {longStayData.map((item, i) => (
                                             <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white border border-rose-100 shadow-sm">
@@ -317,17 +360,41 @@ export function ReportsSection({
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                        <Zap className="h-4 w-4 text-amber-500" /> Estimación 3 Días
-                                    </h4>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Zap className="h-4 w-4 text-amber-500" /> Estimación 3 Días
+                                        </h4>
+                                        <Button 
+                                            variant="ghost" 
+                                            className="h-6 text-[10px] font-bold text-blue-600 uppercase"
+                                            onClick={() => handleStartAsyncReport('predictive')}
+                                        >
+                                            Recálculo Avanzado
+                                        </Button>
+                                    </div>
                                     <div className="grid gap-4">
-                                        {forecastData.map((item, i) => (
-                                            <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-sm flex justify-between items-center">
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-blue-600">{format(new Date(item.fecha), 'EEEE dd', { locale: es })}</p>
-                                                    <h5 className="text-xl font-black text-slate-900">{item.estimacion_entradas} <span className="text-[10px] text-slate-400">ENT.</span></h5>
+                                        {(jobResult && jobResult.length > 0 ? jobResult : forecastData).map((item: any, i: number) => (
+                                            <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-sm transition-all hover:bg-slate-100/80">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">{format(new Date(item.fecha), 'EEEE dd', { locale: es })}</p>
+                                                    <Badge className={item.impacto_esperado === 'Alto' ? 'bg-rose-500/10 text-rose-600 border-rose-100' : 'bg-emerald-500/10 text-emerald-600 border-emerald-100'} variant="outline">
+                                                        {item.impacto_esperado}
+                                                    </Badge>
                                                 </div>
-                                                <Badge className={item.impacto_esperado === 'Alto' ? 'bg-rose-500' : 'bg-emerald-500'}>{item.impacto_esperado}</Badge>
+                                                <div className="grid grid-cols-3 gap-2 text-center">
+                                                    <div className="p-2 bg-white rounded-lg border border-slate-100">
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase">Reservas</p>
+                                                        <p className="text-lg font-black text-slate-900">{item.reservas ?? '-'}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-white rounded-lg border border-slate-100">
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase">Media</p>
+                                                        <p className="text-lg font-black text-slate-900">{item.media_historica ?? item.estimacion_entradas ?? '-'}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-blue-600 rounded-lg shadow-sm">
+                                                        <p className="text-[9px] text-blue-100 font-bold uppercase">Total</p>
+                                                        <p className="text-lg font-black text-white">{item.estimacion_total ?? item.estimacion_entradas ?? '-'}</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

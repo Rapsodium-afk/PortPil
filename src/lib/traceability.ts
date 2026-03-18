@@ -19,10 +19,16 @@ export async function takeOccupancySnapshot() {
   }
 }
 
-export async function getAverageStayData() {
+export async function getAverageStayData(year?: number, month?: number, zone?: string) {
   try {
-    // Requirements: 1 day, 2 days, more than 10 days
-    const results = await prisma.$queryRaw<any[]>`
+    const conditions = [];
+    if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`);
+    if (month && month !== 0) conditions.push(`EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}`);
+    if (zone && zone !== 'Todas') conditions.push(`terminal_id = '${zone}'`);
+    
+    const whereClause = conditions.length > 0 ? `WHERE ` + conditions.join(' AND ') : '';
+
+    const results = await prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         CASE 
           WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
@@ -32,9 +38,10 @@ export async function getAverageStayData() {
         END as bucket,
         COUNT(*) as cantidad
       FROM movimiento_vehiculo
+      ${whereClause}
       GROUP BY 1
       ORDER BY MIN(EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada))) ASC
-    `;
+    `);
     
     return results.map(r => ({
         ...r,
@@ -46,10 +53,11 @@ export async function getAverageStayData() {
   }
 }
 
-export async function getDashboardSummary() {
+export async function getDashboardSummary(zone?: string) {
   try {
+    const whereZone = zone && zone !== 'Todas' ? { id: zone } : {};
     const [zones, lastSnapshots] = await Promise.all([
-      prisma.terminal_Zona.findMany({ where: { activa: true } }),
+      prisma.terminal_Zona.findMany({ where: { activa: true, ...whereZone } }),
       prisma.$queryRaw<any[]>`
         SELECT s1.* 
         FROM historico_ocupacion_snapshot s1
@@ -61,14 +69,14 @@ export async function getDashboardSummary() {
       `
     ]);
 
-    return zones.map(zone => {
-      const snapshot = lastSnapshots.find(s => s.terminal_id === zone.id);
+    return zones.map(z => {
+      const snapshot = lastSnapshots.find(s => s.terminal_id === z.id);
       return {
-        id: zone.id,
-        nombre: zone.nombre,
-        capacidad: zone.capacidad_maxima,
+        id: z.id,
+        nombre: z.nombre,
+        capacidad: z.capacidad_maxima,
         ocupacionActual: snapshot ? Number(snapshot.ocupacion) : 0,
-        porcentaje: snapshot ? Math.round((Number(snapshot.ocupacion) / zone.capacidad_maxima) * 100) : 0
+        porcentaje: snapshot ? Math.round((Number(snapshot.ocupacion) / z.capacidad_maxima) * 100) : 0
       };
     });
   } catch (error) {
@@ -100,35 +108,65 @@ export async function getPowerBIData() {
   }
 }
 
-export async function getOccupancyTrendData() {
+export async function getOccupancyTrendData(year?: number, month?: number, zone?: string) {
   try {
-    const trend = await prisma.$queryRaw<any[]>`
+    const conditions = [];
+    if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`);
+    if (month && month !== 0) conditions.push(`EXTRACT(MONTH FROM fecha_hora) = ${month}`);
+    if (zone && zone !== 'Todas') conditions.push(`terminal_id = '${zone}'`);
+    
+    if (!year && !month) {
+        conditions.push(`fecha_hora >= NOW() - INTERVAL '7 days'`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ` + conditions.join(' AND ') : '';
+    
+    let format = "'DD/MM HH24:00'";
+    if (year && !month) format = "'YYYY-MM'";
+    if (year && month) format = "'DD/MM/YYYY'";
+
+    const trend = await prisma.$queryRawUnsafe<any[]>(`
       SELECT 
-        TO_CHAR(fecha_hora, 'DD/MM HH24:00') as label,
+        TO_CHAR(fecha_hora, ${format}) as label,
         terminal_id,
         AVG(ocupacion)::integer as ocupacion
       FROM historico_ocupacion_snapshot
-      WHERE fecha_hora >= NOW() - INTERVAL '48 hours'
+      ${whereClause}
       GROUP BY 1, 2
-      ORDER BY MIN(fecha_hora) ASC
-    `;
-    return trend;
+      ORDER BY MIN(fecha_hora) DESC
+      LIMIT 100
+    `);
+    
+    return trend.reverse();
   } catch (error) {
     console.error('Error fetching trend data:', error);
     return [];
   }
 }
 
-export async function getVehicleDistributionData() {
+export async function getVehicleDistributionData(year?: number, month?: number, zone?: string) {
   try {
+    let whereClause: any = {
+      fecha_hora_salida: null // Default real-time logic
+    };
+
+    if (year || month || (zone && zone !== 'Todas')) {
+        whereClause = {};
+        if (year) {
+            whereClause.fecha_hora_entrada = {
+                gte: new Date(year, (month ? month - 1 : 0), 1),
+                lt: month ? new Date(year, month, 1) : new Date(year + 1, 0, 1)
+            };
+        }
+        if (zone && zone !== 'Todas') whereClause.terminal_id = zone;
+    }
+
     const distribution = await prisma.movimiento_Vehiculo.groupBy({
       by: ['tipo_vehiculo'],
       _count: {
         _all: true
       },
-      where: {
-        fecha_hora_salida: null
-      }
+      where: whereClause
     });
 
     return distribution.map(d => ({
@@ -140,7 +178,7 @@ export async function getVehicleDistributionData() {
     return [];
   }
 }
-export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number) {
+export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number, zone?: string) {
   try {
     const format = {
         year: 'YYYY',
@@ -151,14 +189,25 @@ export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day
 
     let whereClause = '';
     let movementWhereClause = '';
+    const conditions = [];
+    const movementConditions = [];
+    
     if (year) {
-        if (month && month !== 0) {
-            whereClause = `WHERE EXTRACT(YEAR FROM fecha_hora) = ${year} AND EXTRACT(MONTH FROM fecha_hora) = ${month}`;
-            movementWhereClause = `WHERE EXTRACT(YEAR FROM fecha_hora_entrada) = ${year} AND EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}`;
-        } else {
-            whereClause = `WHERE EXTRACT(YEAR FROM fecha_hora) = ${year}`;
-            movementWhereClause = `WHERE EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`;
-        }
+        conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`);
+        movementConditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`);
+    }
+    if (month && month !== 0) {
+        conditions.push(`EXTRACT(MONTH FROM fecha_hora) = ${month}`);
+        movementConditions.push(`EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}`);
+    }
+    if (zone && zone !== 'Todas') {
+        conditions.push(`terminal_id = '${zone}'`);
+        movementConditions.push(`terminal_id = '${zone}'`);
+    }
+
+    if (conditions.length > 0) {
+        whereClause = `WHERE ` + conditions.join(' AND ');
+        movementWhereClause = `WHERE ` + movementConditions.join(' AND ');
     }
 
     // Try fetching snapshots
@@ -195,22 +244,19 @@ export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day
   }
 }
 
-/**
- * Compliance: Acción para obtener todos los datos históricos de un periodo
- */
-export async function getHistoricalAnalyticsAction(month: number, year: number) {
+export async function getHistoricalAnalyticsAction(month: number, year: number, zone?: string) {
     try {
         const scale = (month === 0) ? 'month' : 'day';
         
         // Fetch global trend
-        const temporal = await getOccupancyByTemporalScale(scale, month, year);
+        const temporal = await getOccupancyByTemporalScale(scale, month, year, zone);
         
-        // Fetch per-zone trends for comparison
-        const zones_to_track = ['TTP1', 'TTP2', 'ZONAS AUX'];
+        // Fetch per-zone trends for comparison (only if specific zone isn't selected or we want to compare)
+        // If a specific zone is selected globally, we might only want that zone, but usually comparing is nice.
+        const zones_to_track = zone && zone !== 'Todas' ? [zone] : ['TTP1', 'TTP2', 'ZONAS AUX'];
         const zoneTrends: Record<string, any[]> = {};
         
         await Promise.all(zones_to_track.map(async (z) => {
-            // Modified logic based on getOccupancyByTemporalScale but filtering by zone
             const format = scale === 'month' ? 'YYYY-MM' : 'YYYY-MM-DD';
             let where = `WHERE EXTRACT(YEAR FROM fecha_hora) = ${year} AND terminal_id = '${z}'`;
             if (month !== 0) where += ` AND EXTRACT(MONTH FROM fecha_hora) = ${month}`;
@@ -231,10 +277,15 @@ export async function getHistoricalAnalyticsAction(month: number, year: number) 
             zoneTrends[z] = res;
         }));
 
-        const dayOfWeek = await getOccupancyByDayOfWeekAction(month, year);
+        const dayOfWeek = await getOccupancyByDayOfWeekAction(month, year, null);
 
-        const monthFilter = month !== 0 ? `AND EXTRACT(MONTH FROM fecha_hora) = ${month}` : '';
-        const movementMonthFilter = month !== 0 ? `AND EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}` : '';
+        const conditions = [];
+        const mConditions = [];
+        if (year) { conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`); mConditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`); }
+        if (month && month !== 0) { conditions.push(`EXTRACT(MONTH FROM fecha_hora) = ${month}`); mConditions.push(`EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}`); }
+        
+        let monthFilter = conditions.length > 0 ? conditions.join(' AND ') : '';
+        let movementMonthFilter = mConditions.length > 0 ? mConditions.join(' AND ') : '';
 
         let zones = await prisma.$queryRawUnsafe<any[]>(`
             SELECT 
@@ -242,8 +293,7 @@ export async function getHistoricalAnalyticsAction(month: number, year: number) 
                 AVG(ocupacion)::integer as avg_ocupacion,
                 false as "isVolume"
             FROM historico_ocupacion_snapshot
-            WHERE EXTRACT(YEAR FROM fecha_hora) = ${year}
-            ${monthFilter}
+            ${monthFilter ? 'WHERE ' + monthFilter : ''}
             GROUP BY 1
         `);
 
@@ -255,8 +305,7 @@ export async function getHistoricalAnalyticsAction(month: number, year: number) 
                     COUNT(*)::integer as avg_ocupacion,
                     true as "isVolume"
                 FROM movimiento_vehiculo
-                WHERE EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}
-                ${movementMonthFilter}
+                ${movementMonthFilter ? 'WHERE ' + movementMonthFilter : ''}
                 GROUP BY 1
             `);
         }
@@ -266,8 +315,7 @@ export async function getHistoricalAnalyticsAction(month: number, year: number) 
                 COALESCE(empresa, 'Sin Empresa') as name,
                 COUNT(*) as total_movimientos
             FROM movimiento_vehiculo
-            WHERE EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}
-            ${movementMonthFilter}
+            ${movementMonthFilter ? 'WHERE ' + movementMonthFilter : ''}
             GROUP BY 1
             ORDER BY total_movimientos DESC
             LIMIT 10
@@ -294,10 +342,16 @@ export async function getHistoricalAnalyticsAction(month: number, year: number) 
 /**
  * Advanced Analytics: Análisis por día de la semana
  */
-export async function getOccupancyByDayOfWeekAction(month: number, year: number) {
+export async function getOccupancyByDayOfWeekAction(month: number, year: number, zone?: string | null) {
     try {
-        const monthFilter = month !== 0 ? `AND EXTRACT(MONTH FROM fecha_hora) = ${month}` : '';
-        const movementMonthFilter = month !== 0 ? `AND EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}` : '';
+        const conditions = [];
+        const mConditions = [];
+        if (year) { conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`); mConditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`); }
+        if (month && month !== 0) { conditions.push(`EXTRACT(MONTH FROM fecha_hora) = ${month}`); mConditions.push(`EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}`); }
+        if (zone && zone !== 'Todas') { conditions.push(`terminal_id = '${zone}'`); mConditions.push(`terminal_id = '${zone}'`); }
+        
+        const monthFilter = conditions.length > 0 ? `WHERE ` + conditions.join(' AND ') : '';
+        const movementMonthFilter = mConditions.length > 0 ? `WHERE ` + mConditions.join(' AND ') : '';
 
         // Try snapshots first
         let results = await prisma.$queryRawUnsafe<any[]>(`
@@ -305,7 +359,6 @@ export async function getOccupancyByDayOfWeekAction(month: number, year: number)
                 EXTRACT(DOW FROM fecha_hora) as day_index,
                 AVG(ocupacion)::integer as value
             FROM historico_ocupacion_snapshot
-            WHERE EXTRACT(YEAR FROM fecha_hora) = ${year}
             ${monthFilter}
             GROUP BY 1
             ORDER BY 1 ASC
@@ -319,7 +372,6 @@ export async function getOccupancyByDayOfWeekAction(month: number, year: number)
                     EXTRACT(DOW FROM fecha_hora_entrada) as day_index,
                     COUNT(*)::integer as value
                 FROM movimiento_vehiculo
-                WHERE EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}
                 ${movementMonthFilter}
                 GROUP BY 1
                 ORDER BY 1 ASC
@@ -419,17 +471,25 @@ export async function getHistoricalStateAction(dateTime: Date) {
     }
 }
 
-export async function getZoneOccupancyByMonth() {
+export async function getZoneOccupancyByMonth(year?: number, month?: number, zone?: string) {
   try {
-    const results = await prisma.$queryRaw<any[]>`
+    const conditions = [];
+    if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`);
+    if (month && month !== 0) conditions.push(`EXTRACT(MONTH FROM fecha_hora) = ${month}`);
+    if (zone && zone !== 'Todas') conditions.push(`terminal_id = '${zone}'`);
+    
+    const whereClause = conditions.length > 0 ? `WHERE ` + conditions.join(' AND ') : '';
+
+    const results = await prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         TO_CHAR(fecha_hora, 'YYYY-MM') as month,
         terminal_id,
         AVG(ocupacion)::integer as avg_ocupacion
       FROM historico_ocupacion_snapshot
+      ${whereClause}
       GROUP BY 1, 2
       ORDER BY 1 ASC, 2 ASC
-    `;
+    `);
     return results;
   } catch (error) {
     console.error('Error fetching zone/month occupancy:', error);
@@ -437,18 +497,26 @@ export async function getZoneOccupancyByMonth() {
   }
 }
 
-export async function getCompanyVolumeData() {
+export async function getCompanyVolumeData(year?: number, month?: number, zone?: string) {
   try {
-    const results = await prisma.$queryRaw<any[]>`
+    const conditions = [];
+    if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`);
+    if (month && month !== 0) conditions.push(`EXTRACT(MONTH FROM fecha_hora_entrada) = ${month}`);
+    if (zone && zone !== 'Todas') conditions.push(`terminal_id = '${zone}'`);
+    
+    const whereClause = conditions.length > 0 ? `WHERE ` + conditions.join(' AND ') : '';
+
+    const results = await prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         COALESCE(empresa, 'Sin Empresa') as name,
         COUNT(*) as total_movimientos,
         COUNT(*) FILTER (WHERE fecha_hora_salida IS NULL) as ocupacion_actual
       FROM movimiento_vehiculo
+      ${whereClause}
       GROUP BY 1
       ORDER BY total_movimientos DESC
       LIMIT 10
-    `;
+    `);
     return results.map(r => ({
         ...r,
         total_movimientos: Number(r.total_movimientos),
@@ -470,6 +538,10 @@ export async function getIndividualVehicleHistory(matricula: string) {
                 matricula: { equals: matricula }
             },
             orderBy: { fecha_hora_entrada: 'desc' }
+            // include: {
+            //     // If there were an AuditLog table, we could include it here.
+            //     // For now, we rely on the version and timestamps added.
+            // }
         });
     } catch (error) {
         console.error('Error fetching vehicle history:', error);
@@ -499,30 +571,52 @@ export async function getLongStayAlerts() {
 
 /**
  * Compliance: Predicción a 3 días vista
+ * Requerimiento: sume reservas actuales y medias históricas 
+ * (promedio de entradas de los últimos 30 días para el mismo día de la semana).
  */
 export async function getPredictiveForecast() {
     try {
-        // Lógica simplificada basada en promedios históricos de los últimos 7 días
-        const stats = await prisma.$queryRaw<any[]>`
+        const now = new Date();
+        
+        // 1. Obtener medias históricas de los últimos 30 días por día de la semana
+        const historicalStats = await prisma.$queryRaw<any[]>`
             SELECT 
                 EXTRACT(DOW FROM fecha_hora_entrada) as dow,
-                COUNT(*) / (SELECT COUNT(DISTINCT DATE(fecha_hora_entrada)) FROM movimiento_vehiculo) as avg_entradas
+                COUNT(*)::float / 4.0 as avg_entradas -- 30 días aprox 4 semanas
             FROM movimiento_vehiculo
             WHERE fecha_hora_entrada >= NOW() - INTERVAL '30 days'
             GROUP BY 1
         `;
 
+        // 2. Obtener reservas actuales (para los próximos 3 días)
+        const reservations = await prisma.reserva.findMany({
+            where: {
+                fecha_prevista: {
+                    gte: now,
+                    lte: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+                }
+            }
+        });
+
         const forecast = [];
-        const now = new Date();
         for (let i = 1; i <= 3; i++) {
             const date = new Date(now);
             date.setDate(now.getDate() + i);
             const dow = date.getDay();
-            const dayStat = stats.find(s => Number(s.dow) === dow);
+            
+            const dayStat = historicalStats.find(s => Number(s.dow) === dow);
+            const avgEntradas = dayStat ? Math.round(Number(dayStat.avg_entradas)) : 0;
+            
+            const dayReservas = reservations.filter(r => 
+                r.fecha_prevista.toDateString() === date.toDateString()
+            ).length;
+
             forecast.push({
                 fecha: date.toISOString().split('T')[0],
-                estimacion_entradas: dayStat ? Math.round(Number(dayStat.avg_entradas)) : 0,
-                impacto_esperado: (dayStat?.avg_entradas > 500) ? 'Alto' : 'Normal'
+                reservas: dayReservas,
+                media_historica: avgEntradas,
+                estimacion_total: dayReservas + avgEntradas,
+                impacto_esperado: (dayReservas + avgEntradas > 500) ? 'Alto' : 'Normal'
             });
         }
         return forecast;
@@ -556,9 +650,10 @@ export async function getZoneOperationalStatus(zoneId: string) {
 /**
  * Compliance: Estado operativo en tiempo real para todas las zonas
  */
-export async function getRealTimeStatusData() {
+export async function getRealTimeStatusData(filterZone?: string) {
     try {
-        const zones = await prisma.terminal_Zona.findMany();
+        const whereClause = filterZone && filterZone !== 'Todas' ? { id: filterZone } : {};
+        const zones = await prisma.terminal_Zona.findMany({ where: whereClause });
         const results = await Promise.all(zones.map(async (zone) => {
             const occupied = await prisma.movimiento_Vehiculo.count({
                 where: { terminal_id: zone.id, fecha_hora_salida: null }
@@ -795,4 +890,74 @@ export async function checkDbConnection(): Promise<{ connected: boolean; message
       message: error.message || 'No se pudo establecer conexión con PostgreSQL' 
     };
   }
+}
+
+/**
+ * Snapshots: Crear snapshot manual
+ */
+export async function createManualSnapshotAction(terminal_id: string, ocupacion: number, notas?: string) {
+    try {
+        return await prisma.historico_Ocupacion_Snapshot.create({
+            data: {
+                terminal_id,
+                ocupacion,
+                manual: true,
+                notas,
+                fecha_hora: new Date()
+            }
+        });
+    } catch (error) {
+        console.error('Error creating manual snapshot:', error);
+        throw error;
+    }
+}
+
+/**
+ * Snapshots: Actualizar snapshot
+ */
+export async function updateSnapshotAction(id: number, data: { ocupacion?: number; notas?: string }) {
+    try {
+        return await prisma.historico_Ocupacion_Snapshot.update({
+            where: { id },
+            data: {
+                ...data,
+                // manual: true // Podría ser opcional si queremos marcarlo como editado
+            }
+        });
+    } catch (error) {
+        console.error('Error updating snapshot:', error);
+        throw error;
+    }
+}
+
+/**
+ * Reports: Iniciar informe asíncrono
+ */
+import { getReportQueue } from './queue/reports';
+
+export async function startAsyncReportAction(type: string, params: any = {}) {
+    const queue = getReportQueue();
+    const job = await queue.add(type, { type, params });
+    return { jobId: job.id };
+}
+
+/**
+ * Reports: Consultar estado de informe
+ */
+export async function getReportStatusAction(jobId: string) {
+    const queue = getReportQueue();
+    const job = await queue.getJob(jobId);
+    
+    if (!job) return { status: 'not_found' };
+    
+    const state = await job.getState();
+    const progress = job.progress;
+    const result = job.returnvalue;
+    
+    return {
+        id: job.id,
+        status: state,
+        progress: typeof progress === 'number' ? progress : 0,
+        result
+    };
 }

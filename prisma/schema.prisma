@@ -17,6 +17,12 @@ model Movimiento_Vehiculo {
   empresa              String?
   posicion             String?   // Compliance: Posición en la plaza
   estado_aduanero      String?   // Compliance: Estado aduanero
+
+  // Traceability
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
+  version              Int       @default(1)
+  registradoPor        String?   @map("registrado_por")
   
   @@index([terminal_id, fecha_hora_entrada])
   @@index([fecha_hora_salida])
@@ -38,7 +44,25 @@ model Historico_Ocupacion_Snapshot {
   terminal_id String
   fecha_hora  DateTime @default(now())
   ocupacion   Int
+
+  // Customizations
+  manual      Boolean  @default(false)
+  notas       String?
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
   
   @@index([terminal_id, fecha_hora])
   @@map("historico_ocupacion_snapshot")
+}
+
+model Reserva {
+  id               Int      @id @default(autoincrement())
+  terminal_id      String
+  matricula        String
+  fecha_prevista   DateTime
+  tipo_vehiculo    String
+  empresa          String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  
+  @@index([terminal_id, fecha_prevista])
+  @@map("reserva")
 }
