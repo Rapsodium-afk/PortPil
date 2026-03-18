@@ -128,6 +128,7 @@ export function AdvancedInsights({ dayOfWeekData, zoneTrends, isFallback }: Adva
                     <CardContent className="pt-6">
                         <div className="h-[400px] w-full">
                             <TrendChart 
+                                expectedTerminals={Object.keys(zoneTrends)}
                                 data={Object.entries(zoneTrends).flatMap(([id, trend]) => 
                                     trend.map(t => ({ ...t, terminal_id: id }))
                                 )} 

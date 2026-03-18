@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, getMonth, getYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { getHistoricalAnalyticsAction } from '@/lib/traceability';
+import { getHistoricalAnalyticsAction, getDetailedOccupancyTrendAction } from '@/lib/traceability';
 import { Badge } from "@/components/ui/badge";
 import { HistoricalFlashback } from './historical-flashback';
 import { TrendChart } from './trend-chart';
@@ -34,6 +34,9 @@ interface ReportsSectionProps {
     longStayData: any[];
     forecastData: any[];
     zone?: string;
+    selectedMonth?: string;
+    selectedYear?: string;
+    isHistorical?: boolean;
 }
 
 export function ReportsSection({ 
@@ -42,16 +45,21 @@ export function ReportsSection({
     companyData: initialCompanyData,
     longStayData,
     forecastData,
-    zone
+    zone,
+    selectedMonth: propMonth,
+    selectedYear: propYear,
+    isHistorical: propIsHistorical
 }: ReportsSectionProps) {
     const [scale, setScale] = useState<'hour' | 'day' | 'month' | 'year'>('day');
-    const [selectedMonth, setSelectedMonth] = useState<string>(String(getMonth(new Date()) + 1));
-    const [selectedYear, setSelectedYear] = useState<string>(String(getYear(new Date())));
-    const [isHistorical, setIsHistorical] = useState(false);
+    const [selectedMonth, setSelectedMonth] = useState<string>(propMonth || String(getMonth(new Date()) + 1));
+    const [selectedYear, setSelectedYear] = useState<string>(propYear || String(getYear(new Date())));
+    const [isHistorical, setIsHistorical] = useState(propIsHistorical || false);
     const [isFallback, setIsFallback] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [viewMode, setViewMode] = useState<'total' | 'detailed'>('total');
     
     const [temporalData, setTemporalData] = useState(initialTemporalData);
+    const [detailedTemporalData, setDetailedTemporalData] = useState<{ [key: string]: any[] }>({});
     const [zoneData, setZoneData] = useState(initialZoneData);
     const [companyData, setCompanyData] = useState(initialCompanyData);
     const [dayOfWeekData, setDayOfWeekData] = useState<any[]>([]);
@@ -59,11 +67,27 @@ export function ReportsSection({
     const [activeJobId, setActiveJobId] = useState<string | null>(null);
     const [jobResult, setJobResult] = useState<any>(null);
 
+    // Sync state with props ONLY when not in personal historical mode 
+    // to avoid overriding local user selections unexpectedly.
+    useEffect(() => {
+        if (!isHistorical) {
+            setTemporalData(initialTemporalData);
+            setZoneData(initialZoneData);
+            setCompanyData(initialCompanyData);
+            if (propMonth) setSelectedMonth(propMonth);
+            if (propYear) setSelectedYear(propYear);
+            
+            // Sync scale
+            if (propMonth === '0') setScale('month');
+            else setScale('day');
+        }
+    }, [initialTemporalData, initialZoneData, initialCompanyData, propMonth, propYear]);
+
     const handleFetchHistorical = async () => {
         setLoading(true);
         try {
             const data = await getHistoricalAnalyticsAction(Number(selectedMonth), Number(selectedYear), zone);
-            setTemporalData({ ...temporalData, day: data.temporal, month: data.temporal });
+            setTemporalData(data.temporal);
             setZoneData(data.zones);
             setCompanyData(data.companies as any);
             setDayOfWeekData(data.dayOfWeek || []);
@@ -106,7 +130,33 @@ export function ReportsSection({
             }
         }
     };
-    
+    const handleToggleViewMode = async (mode: 'total' | 'detailed') => {
+        if (mode === 'detailed' && !detailedTemporalData[scale]) {
+            setLoading(true);
+            try {
+                const data = await getDetailedOccupancyTrendAction(
+                    scale, 
+                    isHistorical ? Number(selectedMonth) : undefined, 
+                    isHistorical ? Number(selectedYear) : undefined, 
+                    zone
+                );
+                setDetailedTemporalData(prev => ({ ...prev, [scale]: data }));
+            } catch (error) {
+                console.error("Failed to fetch detailed trend", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        setViewMode(mode);
+    };
+
+    // Force re-fetch detailed if scale changes and we are in detailed mode
+    useEffect(() => {
+        if (viewMode === 'detailed' && !detailedTemporalData[scale]) {
+            handleToggleViewMode('detailed');
+        }
+    }, [scale]);
+
     return (
         <div className="space-y-8">
             {isHistorical && (
@@ -118,61 +168,65 @@ export function ReportsSection({
             )}
 
             <Card className="border-none shadow-xl bg-white/40 backdrop-blur-md overflow-hidden">
-                <CardHeader className="border-b border-slate-100 bg-white/50">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                <BarChart3 className="h-5 w-5 text-blue-600" />
-                                Informes Analíticos Avanzados
-                            </CardTitle>
-                            <CardDescription>Análisis profundo de operaciones y rendimiento portuario</CardDescription>
+                <div className="sticky top-0 z-30 border-b border-slate-100 bg-white/90 backdrop-blur-lg">
+                    <CardHeader className="py-4 px-6 border-b border-slate-100/50">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <CardTitle className="text-xl font-black text-slate-900 flex items-center gap-2 tracking-tight uppercase italic">
+                                    <BarChart3 className="h-6 w-6 text-blue-600" />
+                                    Inteligencia de Negocio
+                                </CardTitle>
+                                <CardDescription className="font-medium text-slate-500">Análisis profundo de operaciones y rendimiento portuario</CardDescription>
+                            </div>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/30 flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Histórico:</span>
-                            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                                <SelectTrigger className="w-[120px] h-8 text-xs font-semibold border-slate-200 bg-white text-blue-600">
-                                    <SelectValue placeholder="Periodo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="0">📅 Todo el año</SelectItem>
-                                    {Array.from({ length: 12 }).map((_, i) => (
-                                        <SelectItem key={i + 1} value={String(i + 1)}>
-                                            {format(new Date(2024, i, 1), 'MMMM', { locale: es })}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={selectedYear} onValueChange={setSelectedYear}>
-                                <SelectTrigger className="w-[80px] h-8 text-xs font-semibold border-slate-200 bg-white">
-                                    <SelectValue placeholder="Año" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="2022">2022</SelectItem>
-                                    <SelectItem value="2023">2023</SelectItem>
-                                    <SelectItem value="2024">2024</SelectItem>
-                                    <SelectItem value="2025">2025</SelectItem>
-                                    <SelectItem value="2026">2026</SelectItem>
-                                </SelectContent>
-                            </Select>
+                    </CardHeader>
+                    <div className="px-6 py-3 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
+                                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                                    <SelectTrigger className="w-[110px] h-8 text-[10px] font-black border-none bg-transparent text-blue-700 uppercase">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="0">📅 Anual</SelectItem>
+                                        {Array.from({ length: 12 }).map((_, i) => (
+                                            <SelectItem key={i + 1} value={String(i + 1)}>
+                                                {format(new Date(2024, i, 1), 'MMMM', { locale: es }).toUpperCase()}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                                    <SelectTrigger className="w-[70px] h-8 text-[10px] font-black border-none bg-transparent uppercase">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="2022">2022</SelectItem>
+                                        <SelectItem value="2023">2023</SelectItem>
+                                        <SelectItem value="2024">2024</SelectItem>
+                                        <SelectItem value="2025">2025</SelectItem>
+                                        <SelectItem value="2026">2026</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                             <Button 
                                 size="sm" 
                                 variant={isHistorical ? "outline" : "default"}
-                                className="h-8 px-3 text-[10px] font-bold uppercase transition-all"
+                                className={`h-8 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${!isHistorical ? 'bg-blue-600 shadow-blue-500/20 shadow-lg' : ''}`}
                                 onClick={handleFetchHistorical}
                                 disabled={loading}
                             >
-                                {loading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Clock className="h-3 w-3 mr-1" />}
+                                {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Clock className="h-3.5 w-3.5 mr-1.5 shadow-sm" />}
                                 Ver Análisis
                             </Button>
+                            
                             {isHistorical && (
                                 <Button 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="h-8 px-3 text-[10px] font-bold uppercase text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                                    className="h-8 px-3 text-[10px] font-black uppercase text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl"
                                     onClick={resetToRealtime}
                                 >
                                     Reset
@@ -180,14 +234,56 @@ export function ReportsSection({
                             )}
                         </div>
 
+                        <div className="flex items-center gap-4">
+                            {/* Scale Selector relocated here */}
+                            <div className="flex items-center gap-2 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
+                                <span className="text-[9px] font-black text-slate-400 uppercase ml-2 mr-1">Escala:</span>
+                                <Select value={scale} onValueChange={(v: any) => setScale(v)}>
+                                    <SelectTrigger className="w-[100px] h-7 text-[10px] font-bold border-none bg-transparent">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="hour">POR HORA</SelectItem>
+                                        <SelectItem value="day">POR DÍA</SelectItem>
+                                        <SelectItem value="month">POR MES</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* View Mode Toggle moved here */}
+                            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+                                <Button 
+                                    variant={viewMode === 'total' ? 'secondary' : 'ghost'} 
+                                    size="sm" 
+                                    className={`h-7 px-3 text-[9px] font-black uppercase rounded-lg transition-all ${viewMode === 'total' ? 'bg-white shadow-sm' : ''}`}
+                                    onClick={() => handleToggleViewMode('total')}
+                                >
+                                    Total
+                                </Button>
+                                <Button 
+                                    variant={viewMode === 'detailed' ? 'secondary' : 'ghost'} 
+                                    size="sm" 
+                                    className={`h-7 px-3 text-[9px] font-black uppercase rounded-lg transition-all ${viewMode === 'detailed' ? 'bg-white shadow-sm' : ''}`}
+                                    onClick={() => handleToggleViewMode('detailed')}
+                                >
+                                    Por Zonas
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <CardContent className="p-0">
+                    <div className="px-6 py-4 flex flex-wrap items-center gap-4">
                         {isHistorical && (
-                            <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] py-1 font-bold">
-                                <Info className="h-3 w-3 mr-1" /> {selectedMonth === '0' ? `Anual ${selectedYear}` : `${format(new Date(Number(selectedYear), Number(selectedMonth)-1), 'MMMM yyyy', { locale: es })}`}
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] py-1.5 px-3 font-black rounded-lg">
+                                <Info className="h-3.5 w-3.5 mr-1.5" /> 
+                                {selectedMonth === '0' ? `ANUAL ${selectedYear}` : `${format(new Date(Number(selectedYear), Number(selectedMonth)-1), 'MMMM yyyy', { locale: es }).toUpperCase()}`}
                             </Badge>
                         )}
 
                         {activeJobId && (
-                            <div className="w-full mt-4">
+                            <div className="w-full mt-2">
                                 <AsyncProgress 
                                     jobId={activeJobId} 
                                     onComplete={handleJobComplete} 
@@ -224,63 +320,34 @@ export function ReportsSection({
                         </div>
 
                         <TabsContent value="temporal" className="p-6 m-0 outline-none space-y-6">
-                            {!isHistorical && (
-                                <div className="flex justify-end mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-slate-400" />
-                                        <Select value={scale} onValueChange={(v: any) => setScale(v)}>
-                                            <SelectTrigger className="w-[120px] h-8 text-xs font-medium border-slate-200">
-                                                <SelectValue placeholder="Escala" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="hour">Por Hora</SelectItem>
-                                                <SelectItem value="day">Por Día</SelectItem>
-                                                <SelectItem value="month">Por Mes</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            )}
                             <Card className="border-none shadow-sm bg-slate-50/50">
                                 <CardContent className="pt-6">
                                     <div className="h-[400px] w-full">
-                                        <TrendChart data={isHistorical ? (selectedMonth === '0' ? temporalData.month : temporalData.day) : temporalData[scale]} />
+                                        <TrendChart 
+                                            data={viewMode === 'detailed' ? detailedTemporalData[scale] || [] : temporalData[scale]} 
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>
 
                         <TabsContent value="zones" className="p-6 m-0 outline-none">
-                            <div className="grid gap-6 md:grid-cols-2">
+                            <div className="grid gap-6">
                                 <Card className="border-none shadow-sm bg-slate-50/50">
                                     <CardHeader className="pb-2">
-                                        <div className="flex items-center justify-between">
-                                            <CardTitle className="text-base font-bold text-slate-800">Distribución por Terminales</CardTitle>
-                                            <Badge variant="secondary" className={`${isFallback ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-bold`}>
-                                                {isFallback ? "VOLUMEN" : "OCUPACIÓN"}
-                                            </Badge>
-                                        </div>
+                                        <CardTitle className="text-base font-bold text-slate-800">Detalle Operativo por Terminales</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="h-[300px] w-full">
-                                            <DistributionChart data={zoneData} />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                                
-                                <Card className="border-none shadow-sm bg-slate-50/50">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-base font-bold text-slate-800">Detalle Operativo</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-4">
+                                        <div className="grid md:grid-cols-2 gap-4">
                                             {zoneData.map((zone: any) => (
-                                                <div key={zone.terminal_id} className="flex flex-col gap-1.5 p-3 rounded-lg bg-white border border-slate-100">
+                                                <div key={zone.terminal_id} className="flex flex-col gap-1.5 p-4 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{zone.terminal_id}</span>
-                                                        <span className="text-xs font-black text-slate-900">{zone.avg_ocupacion} {isFallback ? "movs" : "veh."}</span>
+                                                        <Badge variant="secondary" className={`${isFallback ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-bold`}>
+                                                            {zone.avg_ocupacion} {isFallback ? "movs" : "veh."}
+                                                        </Badge>
                                                     </div>
-                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
                                                         <div 
                                                             className={`h-full transition-all duration-500 ${isFallback ? 'bg-indigo-500' : 'bg-blue-500'}`}
                                                             style={{ width: `${Math.min((Number(zone.avg_ocupacion) / (zone.terminal_id === 'ZONAS AUX' ? 1000 : 500)) * 100, 100)}%` }} 

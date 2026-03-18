@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StayChart } from './components/stay-chart';
 import { TrendChart } from './components/trend-chart';
-import { DistributionChart } from './components/distribution-chart';
 import { ReportsSection } from './components/reports-section';
 import { MovementSearch } from './components/movement-search';
 import { CSVUploader } from './components/csv-uploader';
@@ -29,7 +28,11 @@ import {
 } from '@/lib/traceability';
 import { TerminalStatusDashboard } from './components/terminal-status-dashboard';
 import { SnapshotManager } from './components/snapshot-manager';
-import { BarChart3, Clock, Database, FileOutput, Server, Info, LineChart, PieChart, Search, Activity, ShieldAlert, Zap, History } from 'lucide-react';
+import { 
+    Activity, BarChart3, Clock, Database, FileDown, FileOutput, Filter, History, Info, 
+    LayoutDashboard, LineChart, MapPin, PieChart, Search, Server, Settings, ShieldAlert, 
+    ShieldCheck, Zap
+} from 'lucide-react';
 
 async function seedInitialDataIfNeeded() {
   const zoneCount = await prisma.terminal_Zona.count();
@@ -113,15 +116,22 @@ async function DashboardOverview({ zone }: { zone?: string }) {
 }
 
 async function AnalysisSection({ year, month, zone }: { year?: number, month?: number, zone?: string }) {
-    const [stayData, distributionData] = await Promise.all([
+    const currentYear = new Date().getFullYear();
+    const isHistorical = year && year !== currentYear;
+
+    const [stayData, benchmarkData] = await Promise.all([
         getAverageStayData(year, month, zone),
-        getVehicleDistributionData(year, month, zone)
+        isHistorical ? getAverageStayData(currentYear, undefined, zone) : Promise.resolve([])
     ]);
     
     return (
-        <div className="grid gap-6 lg:grid-cols-2">
-             <StayChart data={stayData as any[]} />
-             <DistributionChart data={distributionData} />
+        <div className="grid gap-6 grid-cols-1">
+             <StayChart 
+                data={stayData as any[]} 
+                benchmark={benchmarkData as any[]}
+                selectedYear={year || currentYear}
+                benchmarkLabel={`Actual (${currentYear})`}
+             />
         </div>
     );
 }
@@ -162,6 +172,9 @@ async function ReportingArea({ year: fYear, month: fMonth, zone: fZone }: { year
                 longStayData={longStay}
                 forecastData={forecast}
                 zone={fZone}
+                selectedYear={fYear ? String(fYear) : undefined}
+                selectedMonth={fMonth !== undefined ? String(fMonth) : undefined}
+                isHistorical={!!fYear || !!fMonth}
             />
             <SnapshotManager snapshots={snapshots} />
         </div>
@@ -225,6 +238,43 @@ export default async function TraceabilityPage(props: { searchParams?: Promise<{
         </div>
       </div>
       
+      {/* Dashboard Summary and Architecture */}
+      <div className="grid gap-6 lg:grid-cols-4">
+          <div className="lg:col-span-3">
+              <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {[1,2,3,4].map(i => <Card key={i} className="h-32 animate-pulse bg-slate-100 border-none" />)}
+              </div>}>
+                  <DashboardOverview zone={zone} />
+              </Suspense>
+          </div>
+          <div className="lg:col-span-1">
+              <Card className="h-full border-none shadow-lg bg-gradient-to-br from-blue-600 to-blue-800 text-white overflow-hidden relative">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                      <Database size={80} />
+                  </div>
+                  <CardContent className="p-6 flex flex-col justify-center h-full space-y-4 relative z-10">
+                      <div className="flex items-center gap-2">
+                          <Server className="h-4 w-4 text-blue-200" />
+                          <h4 className="font-bold text-sm tracking-tight text-white">PostgreSQL Architecture</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-white/10 p-2 rounded-lg backdrop-blur-md">
+                              <p className="text-[10px] text-blue-200">Latencia</p>
+                              <p className="text-xs font-bold text-green-300">{'<45ms'}</p>
+                          </div>
+                          <div className="bg-white/10 p-2 rounded-lg backdrop-blur-md">
+                              <p className="text-[10px] text-blue-200">Escala</p>
+                              <p className="text-xs font-bold font-mono">1M+ recs</p>
+                          </div>
+                      </div>
+                      <p className="text-[9px] leading-relaxed text-blue-50/70">
+                          Utilizamos <strong>Snapshots Materializados</strong> y procesamiento concurrente.
+                      </p>
+                  </CardContent>
+              </Card>
+          </div>
+      </div>
+
       <TraceabilityFilters />
       
       {/* Real-time Status Dashboard (Compliance Requirement) */}
@@ -250,50 +300,10 @@ export default async function TraceabilityPage(props: { searchParams?: Promise<{
          <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
             <LineChart className="h-4 w-4" /> Rendimiento y Tendencias
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-            <Suspense fallback={<div className="lg:col-span-2 h-[400px] bg-slate-100 animate-pulse rounded-xl" />}>
+        <div className="grid gap-6 grid-cols-1">
+            <Suspense fallback={<div className="h-[400px] bg-slate-100 animate-pulse rounded-xl" />}>
                 <TrendSection year={year} month={month} zone={zone} />
             </Suspense>
-            
-            <Card className="lg:col-span-1 border-none shadow-lg bg-gradient-to-br from-blue-600 to-blue-800 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                    <Database size={120} />
-                </div>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-white">
-                        <Info className="h-5 w-5" />
-                        Arquitectura PostgreSQL
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 relative z-10">
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center bg-white/10 p-3 rounded-lg backdrop-blur-md">
-                            <span className="text-blue-100 text-sm">Motor Principal:</span>
-                            <span className="font-bold">PostgreSQL 16+</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-white/10 p-3 rounded-lg backdrop-blur-md">
-                            <span className="text-blue-100 text-sm">Latencia Agg:</span>
-                            <span className="font-bold text-green-300">{'<45ms'}</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-white/10 p-3 rounded-lg backdrop-blur-md">
-                            <span className="text-blue-100 text-sm">Escalabilidad:</span>
-                            <span className="font-bold">1M+ registros/año</span>
-                        </div>
-                    </div>
-                    
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-                        <h4 className="font-bold text-sm">Optimización de Consultas</h4>
-                        <p className="text-xs leading-relaxed text-blue-50/80">
-                            Utilizamos <strong>Materialized Snapshots</strong> y procesamiento concurrente para asegurar que el escalado de datos no afecte la experiencia del usuario.
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className="text-[10px] text-white border-white/20">JSON Poly</Badge>
-                            <Badge variant="outline" className="text-[10px] text-white border-white/20">Stream SSR</Badge>
-                            <Badge variant="outline" className="text-[10px] text-white border-white/20">BI-Ready</Badge>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
       </div>
 

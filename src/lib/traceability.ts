@@ -33,14 +33,74 @@ export async function getAverageStayData(year?: number, month?: number, zone?: s
         CASE 
           WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
           WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
-          WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '3-10 días'
+          WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+          WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+          WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+          WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
           ELSE '+10 días'
         END as bucket,
         COUNT(*) as cantidad
       FROM movimiento_vehiculo
       ${whereClause}
       GROUP BY 1
-      ORDER BY MIN(EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada))) ASC
+      ORDER BY 
+        CASE 
+          WHEN (CASE 
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
+            ELSE '+10 días'
+          END) = '1 día' THEN 1
+          WHEN (CASE 
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
+            ELSE '+10 días'
+          END) = '2 días' THEN 2
+          WHEN (CASE 
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
+            ELSE '+10 días'
+          END) = '3 días' THEN 3
+          WHEN (CASE 
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
+            ELSE '+10 días'
+          END) = '4 días' THEN 4
+          WHEN (CASE 
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
+            ELSE '+10 días'
+          END) = '5 días' THEN 5
+          WHEN (CASE 
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 1 THEN '1 día'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 2 THEN '2 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 3 THEN '3 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 4 THEN '4 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 5 THEN '5 días'
+            WHEN EXTRACT(DAY FROM (COALESCE(fecha_hora_salida, NOW()) - fecha_hora_entrada)) <= 10 THEN '7-10 días'
+            ELSE '+10 días'
+          END) = '7-10 días' THEN 6
+          ELSE 7
+        END ASC
     `);
     
     return results.map(r => ({
@@ -178,7 +238,7 @@ export async function getVehicleDistributionData(year?: number, month?: number, 
     return [];
   }
 }
-export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number, zone?: string) {
+export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number, zone?: string, detailed: boolean = false) {
   try {
     const format = {
         year: 'YYYY',
@@ -214,12 +274,13 @@ export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day
     let results = await prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         TO_CHAR(fecha_hora, '${format}') as label,
+        ${detailed ? 'terminal_id,' : ''}
         AVG(ocupacion)::integer as value
       FROM historico_ocupacion_snapshot
       ${whereClause}
-      GROUP BY 1
+      GROUP BY 1 ${detailed ? ', 2' : ''}
       ORDER BY MIN(fecha_hora) ASC
-      LIMIT 100
+      LIMIT 300
     `);
 
     // Fallback to Movement Volume if no snapshots (common for historical imported data)
@@ -227,12 +288,13 @@ export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day
         results = await prisma.$queryRawUnsafe<any[]>(`
           SELECT 
             TO_CHAR(fecha_hora_entrada, '${format}') as label,
+            ${detailed ? 'terminal_id,' : ''}
             COUNT(*)::integer as value
           FROM movimiento_vehiculo
           ${movementWhereClause}
-          GROUP BY 1
+          GROUP BY 1 ${detailed ? ', 2' : ''}
           ORDER BY MIN(fecha_hora_entrada) ASC
-          LIMIT 100
+          LIMIT 300
         `);
         // Mark as volume data if needed, but keeping the same schema for the chart
     }
@@ -249,7 +311,13 @@ export async function getHistoricalAnalyticsAction(month: number, year: number, 
         const scale = (month === 0) ? 'month' : 'day';
         
         // Fetch global trend
-        const temporal = await getOccupancyByTemporalScale(scale, month, year, zone);
+        const [yearData, monthData, dayData, hourData] = await Promise.all([
+            getOccupancyByTemporalScale('year', month, year, zone),
+            getOccupancyByTemporalScale('month', month, year, zone),
+            getOccupancyByTemporalScale('day', month, year, zone),
+            getOccupancyByTemporalScale('hour', month, year, zone)
+        ]);
+        const temporal = { year: yearData, month: monthData, day: dayData, hour: hourData };
         
         // Fetch per-zone trends for comparison (only if specific zone isn't selected or we want to compare)
         // If a specific zone is selected globally, we might only want that zone, but usually comparing is nice.
@@ -936,16 +1004,17 @@ export async function updateSnapshotAction(id: number, data: { ocupacion?: numbe
 import { getReportQueue } from './queue/reports';
 
 export async function startAsyncReportAction(type: string, params: any = {}) {
-    const queue = getReportQueue();
+    const queue = await getReportQueue();
     const job = await queue.add(type, { type, params });
     return { jobId: job.id };
 }
+
 
 /**
  * Reports: Consultar estado de informe
  */
 export async function getReportStatusAction(jobId: string) {
-    const queue = getReportQueue();
+    const queue = await getReportQueue();
     const job = await queue.getJob(jobId);
     
     if (!job) return { status: 'not_found' };
@@ -960,4 +1029,11 @@ export async function getReportStatusAction(jobId: string) {
         progress: typeof progress === 'number' ? progress : 0,
         result
     };
+}
+
+/**
+ * Reports: Obtener tendencia detallada por terminales
+ */
+export async function getDetailedOccupancyTrendAction(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number, zone?: string) {
+    return getOccupancyByTemporalScale(scale, month, year, zone, true);
 }

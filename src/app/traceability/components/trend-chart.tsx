@@ -5,26 +5,34 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 interface TrendChartProps {
   data: any[];
+  expectedTerminals?: string[];
 }
 
-export function TrendChart({ data }: TrendChartProps) {
+export function TrendChart({ data, expectedTerminals }: TrendChartProps) {
   // Detect if data is un-pivoted (multi-terminal) or aggregate (single value)
   const isAggregate = data.length > 0 && !('terminal_id' in data[0]);
 
   // Pivot mapping: transform data from [{label, terminal_id, ocupacion}] to [{label, T1: 10, T2: 20}]
   const pivotedData = isAggregate ? data : data.reduce((acc: any[], curr) => {
-    const existing = acc.find(item => item.label === curr.label);
+    let existing = acc.find(item => item.label === curr.label);
     const val = curr.ocupacion ?? curr.value; // Handle both occupancy and volume
-    if (existing) {
-      existing[curr.terminal_id] = val;
-    } else {
-      acc.push({ label: curr.label, [curr.terminal_id]: val });
+    
+    if (!existing) {
+      existing = { label: curr.label };
+      // Base padding for lines so they appear at 0 instead of disconnecting
+      if (expectedTerminals && expectedTerminals.length > 0) {
+        expectedTerminals.forEach(t => existing[t] = 0);
+      }
+      acc.push(existing);
     }
+    
+    existing[curr.terminal_id] = val;
     return acc;
   }, []);
 
   // Extract unique terminal IDs for lines
-  const terminals = isAggregate ? [] : Array.from(new Set(data.map(d => d.terminal_id)));
+  const dataTerminals = Array.from(new Set(data.map(d => d.terminal_id)));
+  const terminals = isAggregate ? [] : (expectedTerminals && expectedTerminals.length > 0 ? expectedTerminals : dataTerminals);
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
