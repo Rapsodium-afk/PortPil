@@ -13,5 +13,8 @@
     "dbUser": "postgres",
     "dbPassword": "Cont1321!",
     "dbName": "trazability"
-  }
+  },
+  "heroTitle": "",
+  "heroSubtitle": "",
+  "heroImageId": "img-1773663325813"
 }
