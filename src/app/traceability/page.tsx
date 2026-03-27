@@ -86,7 +86,7 @@ async function DashboardOverview({ zone }: { zone?: string }) {
   
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {summary.map((item) => (
+      {summary.map((item: any) => (
         <Card key={item.id} className="transition-all hover:scale-[1.02] border-none shadow-md bg-white/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-700">{item.nombre}</CardTitle>
@@ -242,7 +242,7 @@ export default async function TraceabilityPage(props: { searchParams?: Promise<{
       <div className="grid gap-6 lg:grid-cols-4">
           <div className="lg:col-span-3">
               <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {[1,2,3,4].map(i => <Card key={i} className="h-32 animate-pulse bg-slate-100 border-none" />)}
+                  {[1,2,3,4].map((i: number) => <Card key={i} className="h-32 animate-pulse bg-slate-100 border-none" />)}
               </div>}>
                   <DashboardOverview zone={zone} />
               </Suspense>
@@ -289,7 +289,7 @@ export default async function TraceabilityPage(props: { searchParams?: Promise<{
             </div>
         </div>
         <Suspense fallback={<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1,2,3,4].map(i => <Card key={i} className="h-32 animate-pulse bg-slate-100 border-none" />)}
+            {[1,2,3,4].map((i: number) => <Card key={i} className="h-32 animate-pulse bg-slate-100 border-none" />)}
         </div>}>
             <RealTimeDashboard zone={zone} />
         </Suspense>

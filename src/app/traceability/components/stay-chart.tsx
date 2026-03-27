@@ -14,7 +14,7 @@ export function StayChart({ data, benchmark, selectedYear, benchmarkLabel }: Sta
   const isComparison = benchmark && benchmark.length > 0;
   
   // Merge data for comparison
-  const mergedData = data.map(item => {
+  const mergedData = data.map((item: any) => {
     const benchmarkItem = benchmark?.find(b => b.bucket === item.bucket);
     return {
       bucket: item.bucket,

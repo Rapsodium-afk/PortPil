@@ -19,7 +19,7 @@ export async function takeOccupancySnapshot() {
   }
 }
 
-export async function getAverageStayData(year?: number, month?: number, zone?: string) {
+export async function getAverageStayData(year?: number, month?: number, zone?: string): Promise<any[]> {
   try {
     const conditions = [];
     if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`);
@@ -113,7 +113,7 @@ export async function getAverageStayData(year?: number, month?: number, zone?: s
   }
 }
 
-export async function getDashboardSummary(zone?: string) {
+export async function getDashboardSummary(zone?: string): Promise<any[]> {
   try {
     const whereZone = zone && zone !== 'Todas' ? { id: zone } : {};
     const [zones, lastSnapshots] = await Promise.all([
@@ -145,7 +145,7 @@ export async function getDashboardSummary(zone?: string) {
   }
 }
 
-export async function getPowerBIData() {
+export async function getPowerBIData(): Promise<any[]> {
   try {
     const data = await prisma.movimiento_Vehiculo.findMany({
       take: 1000, 
@@ -168,7 +168,7 @@ export async function getPowerBIData() {
   }
 }
 
-export async function getOccupancyTrendData(year?: number, month?: number, zone?: string) {
+export async function getOccupancyTrendData(year?: number, month?: number, zone?: string): Promise<any[]> {
   try {
     const conditions = [];
     if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`);
@@ -204,7 +204,7 @@ export async function getOccupancyTrendData(year?: number, month?: number, zone?
   }
 }
 
-export async function getVehicleDistributionData(year?: number, month?: number, zone?: string) {
+export async function getVehicleDistributionData(year?: number, month?: number, zone?: string): Promise<any[]> {
   try {
     let whereClause: any = {
       fecha_hora_salida: null // Default real-time logic
@@ -238,7 +238,7 @@ export async function getVehicleDistributionData(year?: number, month?: number, 
     return [];
   }
 }
-export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number, zone?: string, detailed: boolean = false) {
+export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day' | 'hour', month?: number, year?: number, zone?: string, detailed: boolean = false): Promise<any[]> {
   try {
     const format = {
         year: 'YYYY',
@@ -306,7 +306,7 @@ export async function getOccupancyByTemporalScale(scale: 'year' | 'month' | 'day
   }
 }
 
-export async function getHistoricalAnalyticsAction(month: number, year: number, zone?: string) {
+export async function getHistoricalAnalyticsAction(month: number, year: number, zone?: string): Promise<any> {
     try {
         const scale = (month === 0) ? 'month' : 'day';
         
@@ -410,7 +410,7 @@ export async function getHistoricalAnalyticsAction(month: number, year: number, 
 /**
  * Advanced Analytics: Análisis por día de la semana
  */
-export async function getOccupancyByDayOfWeekAction(month: number, year: number, zone?: string | null) {
+export async function getOccupancyByDayOfWeekAction(month: number, year: number, zone?: string | null): Promise<any[]> {
     try {
         const conditions = [];
         const mConditions = [];
@@ -469,7 +469,7 @@ export async function getDetailedOccupancyLogsAction(params: {
     endDate?: Date;
     page?: number;
     pageSize?: number;
-}) {
+}): Promise<any> {
     try {
         const { zone, empresa, tipo, startDate, endDate, page = 1, pageSize = 20 } = params;
         const skip = (page - 1) * pageSize;
@@ -509,7 +509,7 @@ export async function getDetailedOccupancyLogsAction(params: {
 /**
  * Compliance: Acción para obtener el estado de ocupación en un momento histórico dado
  */
-export async function getHistoricalStateAction(dateTime: Date) {
+export async function getHistoricalStateAction(dateTime: Date): Promise<any[]> {
     try {
         // Encontrar snapshots más cercanos a esa fecha (+- 1 hora)
         const snapshots = await prisma.$queryRaw<any[]>`
@@ -539,7 +539,7 @@ export async function getHistoricalStateAction(dateTime: Date) {
     }
 }
 
-export async function getZoneOccupancyByMonth(year?: number, month?: number, zone?: string) {
+export async function getZoneOccupancyByMonth(year?: number, month?: number, zone?: string): Promise<any[]> {
   try {
     const conditions = [];
     if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora) = ${year}`);
@@ -565,7 +565,7 @@ export async function getZoneOccupancyByMonth(year?: number, month?: number, zon
   }
 }
 
-export async function getCompanyVolumeData(year?: number, month?: number, zone?: string) {
+export async function getCompanyVolumeData(year?: number, month?: number, zone?: string): Promise<any[]> {
   try {
     const conditions = [];
     if (year) conditions.push(`EXTRACT(YEAR FROM fecha_hora_entrada) = ${year}`);
@@ -599,7 +599,7 @@ export async function getCompanyVolumeData(year?: number, month?: number, zone?:
 /**
  * Compliance: Historial individual por matrícula
  */
-export async function getIndividualVehicleHistory(matricula: string) {
+export async function getIndividualVehicleHistory(matricula: string): Promise<any[]> {
     try {
         return await prisma.movimiento_Vehiculo.findMany({
             where: {
@@ -620,7 +620,7 @@ export async function getIndividualVehicleHistory(matricula: string) {
 /**
  * Compliance: Alertas de larga estancia (>= 5 días)
  */
-export async function getLongStayAlerts() {
+export async function getLongStayAlerts(): Promise<any[]> {
     try {
         return await prisma.movimiento_Vehiculo.findMany({
             where: {
@@ -642,7 +642,7 @@ export async function getLongStayAlerts() {
  * Requerimiento: sume reservas actuales y medias históricas 
  * (promedio de entradas de los últimos 30 días para el mismo día de la semana).
  */
-export async function getPredictiveForecast() {
+export async function getPredictiveForecast(): Promise<any[]> {
     try {
         const now = new Date();
         
@@ -718,7 +718,7 @@ export async function getZoneOperationalStatus(zoneId: string) {
 /**
  * Compliance: Estado operativo en tiempo real para todas las zonas
  */
-export async function getRealTimeStatusData(filterZone?: string) {
+export async function getRealTimeStatusData(filterZone?: string): Promise<any[]> {
     try {
         const whereClause = filterZone && filterZone !== 'Todas' ? { id: filterZone } : {};
         const zones = await prisma.terminal_Zona.findMany({ where: whereClause });

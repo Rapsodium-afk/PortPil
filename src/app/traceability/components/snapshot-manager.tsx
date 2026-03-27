@@ -133,7 +133,7 @@ export function SnapshotManager({ snapshots = [] }: { snapshots?: any[] }) {
               <p className="text-sm italic">No hay registros para mostrar</p>
             </div>
           ) : (
-            snapshots.map((s) => (
+            snapshots.map((s: any) => (
               <div key={s.id} className="group flex items-center justify-between p-4 rounded-xl bg-white border border-slate-100 hover:border-indigo-200 transition-all hover:shadow-md">
                 <div className="flex gap-4 items-center">
                   <div className={`p-2 rounded-lg ${s.manual ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>

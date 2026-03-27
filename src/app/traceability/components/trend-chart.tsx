@@ -31,7 +31,7 @@ export function TrendChart({ data, expectedTerminals }: TrendChartProps) {
   }, []);
 
   // Extract unique terminal IDs for lines
-  const dataTerminals = Array.from(new Set(data.map(d => d.terminal_id)));
+  const dataTerminals = Array.from(new Set(data.map((d: any) => d.terminal_id)));
   const terminals = isAggregate ? [] : (expectedTerminals && expectedTerminals.length > 0 ? expectedTerminals : dataTerminals);
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -74,7 +74,7 @@ export function TrendChart({ data, expectedTerminals }: TrendChartProps) {
                     name="Total"
                 />
               ) : (
-                terminals.map((id, index) => (
+                terminals.map((id: any, index: number) => (
                     <Line 
                       key={id}
                       type="monotone" 
