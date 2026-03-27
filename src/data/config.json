@@ -8,7 +8,7 @@
     "dbName": ""
   },
   "traceabilityDbConfig": {
-    "dbHost": "88.2.196.170",
+    "dbHost": "127.0.0.1",
     "dbPort": 5450,
     "dbUser": "postgres",
     "dbPassword": "Cont1321!",
