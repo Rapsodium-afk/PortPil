@@ -62,7 +62,7 @@ export function AdvancedInsights({ dayOfWeekData, zoneTrends, isFallback }: Adva
                                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={34}>
-                                        {dayOfWeekData.map((entry, index) => (
+                                        {dayOfWeekData.map((entry: any, index: number) => (
                                             <Cell 
                                                 key={`cell-${index}`} 
                                                 fill={['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(entry.label) ? '#3b82f6' : '#cbd5e1'} 
@@ -91,7 +91,7 @@ export function AdvancedInsights({ dayOfWeekData, zoneTrends, isFallback }: Adva
                             <div>
                                 <p className="text-sm font-black text-orange-900">Pico Semanal Identificado</p>
                                 <p className="text-xs text-orange-800/80 mt-1 leading-relaxed">
-                                    El día de mayor actividad es <strong className="text-orange-950 underline decoration-orange-200">{dayOfWeekData.length > 0 ? [...dayOfWeekData].sort((a,b) => b.value - a.value)[0].label : '...'}</strong> con un {isFallback ? 'volumen' : 'promedio'} de {dayOfWeekData.length > 0 ? Math.max(...dayOfWeekData.map(d => d.value)) : 0} {isFallback ? 'movs' : 'veh.'}.
+                                    El día de mayor actividad es <strong className="text-orange-950 underline decoration-orange-200">{dayOfWeekData.length > 0 ? [...dayOfWeekData].sort((a,b) => b.value - a.value)[0].label : '...'}</strong> con un {isFallback ? 'volumen' : 'promedio'} de {dayOfWeekData.length > 0 ? Math.max(...dayOfWeekData.map((d: any) => d.value)) : 0} {isFallback ? 'movs' : 'veh.'}.
                                 </p>
                             </div>
                         </div>
@@ -130,7 +130,7 @@ export function AdvancedInsights({ dayOfWeekData, zoneTrends, isFallback }: Adva
                             <TrendChart 
                                 expectedTerminals={Object.keys(zoneTrends)}
                                 data={Object.entries(zoneTrends).flatMap(([id, trend]) => 
-                                    trend.map(t => ({ ...t, terminal_id: id }))
+                                    trend.map((t: any) => ({ ...t, terminal_id: id }))
                                 )} 
                             />
                         </div>

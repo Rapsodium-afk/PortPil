@@ -61,7 +61,7 @@ export function MovementSearch() {
 
             // Generate CSV
             const headers = ['Matricula', 'Terminal', 'Empresa', 'Tipo', 'Entrada', 'Salida'];
-            const rows = allData.map(m => [
+            const rows = allData.map((m: any) => [
                 m.matricula,
                 m.terminal_id,
                 m.empresa || '',

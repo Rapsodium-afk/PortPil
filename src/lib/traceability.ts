@@ -757,7 +757,7 @@ export interface MovementFilter {
     fechaFin?: string;
 }
 
-export async function searchMovements(filters: MovementFilter, limit: number | null = 200) {
+export async function searchMovements(filters: MovementFilter, limit: number | null = 200): Promise<any[]> {
     try {
         let where: any = {};
         
@@ -783,7 +783,7 @@ export async function searchMovements(filters: MovementFilter, limit: number | n
         });
     } catch (error) {
         console.error('Error searching movements:', error);
-        return [];
+        return [] as any[];
     }
 }
 
