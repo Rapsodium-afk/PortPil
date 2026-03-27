@@ -235,7 +235,7 @@ export async function testTraceabilityConnectionAction(config: DatabaseConfig) {
     const url = `postgresql://${config.dbUser}:${config.dbPassword}@${config.dbHost}:${config.dbPort || 5432}/${config.dbName}?schema=public&connect_timeout=60&socket_timeout=60&sslmode=disable`;
     
     // We create a temporary client to test this specific config
-    const { PrismaClient } = await import('@prisma/client');
+    const { PrismaClient } = (await import('@prisma/client')) as any;
     const { Pool } = await import('pg');
     const { PrismaPg } = await import('@prisma/adapter-pg');
     
